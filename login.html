@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Semanario V2 · Entrar</title>
+<style>
+:root{ --orange:#ff6b35; --orange-dark:#e85a28; --bg:#f2f2f4; --ink:#2b2b30; --muted:#8a8a94; --line:#ececf0;
+  --font: ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif; }
+*{box-sizing:border-box} body{margin:0; font-family:var(--font); background:radial-gradient(1000px 400px at 50% -120px,#ffe9dd,transparent 70%),var(--bg);
+  color:var(--ink); min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:40px 16px}
+.card{width:100%; max-width:420px; background:#fff; border-radius:20px; box-shadow:0 8px 30px rgba(30,20,10,.12); overflow:hidden}
+.head{background:linear-gradient(135deg,var(--orange),var(--orange-dark)); color:#fff; padding:20px 22px}
+.head h1{margin:0; font-size:20px; font-weight:800}
+.head p{margin:4px 0 0; font-size:12.5px; opacity:.92}
+.body{padding:20px 22px}
+h2{font-size:14px; margin:0 0 12px; font-weight:800}
+.field{margin-bottom:12px}
+.field label{display:block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); margin-bottom:6px}
+.field input{width:100%; border:1.5px solid var(--line); border-radius:11px; padding:11px 12px; font-family:inherit; font-size:14px; background:#fafafb; outline:none}
+.field input:focus{border-color:var(--orange); box-shadow:0 0 0 3px #ffdcca; background:#fff}
+.btn{border:none; border-radius:12px; padding:12px 14px; font-family:inherit; font-weight:800; font-size:14px; cursor:pointer; width:100%}
+.btn.primary{background:var(--orange); color:#fff} .btn.primary:hover{background:var(--orange-dark)}
+.btn.ghost{background:#f1f1f4; color:#55555e; margin-top:8px} .btn.ghost:hover{background:#e9e9ee}
+.row{display:flex; gap:8px} .row .btn{flex:1}
+.sep{display:flex; align-items:center; gap:10px; margin:16px 0; color:var(--muted); font-size:11px; font-weight:700}
+.sep::before,.sep::after{content:""; flex:1; height:1px; background:var(--line)}
+.msg{margin-top:12px; font-size:13px; padding:10px 12px; border-radius:10px; display:none}
+.msg.show{display:block}
+.msg.ok{background:#e7f7ec; color:#1f7a4a} .msg.err{background:#fdecea; color:#c0392b} .msg.info{background:#eef3fb; color:#2c5aa0}
+.fam{border:1.5px solid var(--line); border-radius:12px; padding:12px; margin-bottom:8px; display:flex; flex-direction:column; gap:10px}
+.fam-top{display:flex; justify-content:space-between; align-items:center}
+.fam .n{font-weight:800; font-size:14px} .fam .role{font-size:11px; color:var(--muted)}
+.code{font-family:ui-monospace,monospace; font-weight:800; background:#fff2ea; color:var(--orange-dark); padding:4px 8px; border-radius:8px; font-size:13px; letter-spacing:1px}
+.userbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:12.5px; color:var(--muted)}
+.link{background:none; border:none; color:var(--orange-dark); font-weight:800; cursor:pointer; font-family:inherit; font-size:12.5px}
+.tabs{display:flex; gap:6px; margin-bottom:14px}
+.tabs button{flex:1; border:1.5px solid var(--line); background:#fafafb; border-radius:10px; padding:9px; font-family:inherit; font-weight:800; font-size:12.5px; color:#77777f; cursor:pointer}
+.tabs button.on{border-color:var(--orange); background:#fff2ea; color:var(--orange-dark)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head"><h1>Semanario Familiar</h1><p id="headSub">Entra para empezar</p></div>
+  <div class="body">
+
+    <!-- ===== NO logueado: auth ===== -->
+    <section id="authView">
+      <div class="tabs">
+        <button id="tabIn" class="on">Entrar</button>
+        <button id="tabUp">Crear cuenta</button>
+      </div>
+
+      <div class="field" id="nameField" style="display:none">
+        <label for="dname">Tu nombre</label>
+        <input id="dname" type="text" placeholder="Cómo te verá la familia">
+      </div>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="tu@email.com" autocomplete="email"></div>
+      <div class="field"><label for="pass">Contraseña</label><input id="pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+
+      <button class="btn primary" id="doAuth">Entrar</button>
+      <div class="sep">o</div>
+      <button class="btn ghost" id="doMagic">✉️ Enviarme un enlace mágico</button>
+
+      <div class="msg" id="authMsg"></div>
+    </section>
+
+    <!-- ===== Logueado: familia ===== -->
+    <section id="famView" class="hidden">
+      <div class="userbar"><span id="whoami"></span><button class="link" id="signOut">Salir</button></div>
+
+      <div id="famList"></div>
+
+      <div class="sep">gestionar</div>
+      <div class="field"><label for="famName">Crear una familia nueva</label><input id="famName" type="text" placeholder="Ej: Familia García"></div>
+      <button class="btn primary" id="doCreate">Crear familia</button>
+
+      <div class="sep">o</div>
+      <div class="field"><label for="famCode">Unirse con código de invitación</label><input id="famCode" type="text" placeholder="Ej: 9F3A2C"></div>
+      <button class="btn ghost" id="doJoin">Unirme</button>
+
+      <div class="msg" id="famMsg"></div>
+    </section>
+
+  </div>
+</div>
+
+<script type="module">
+import { auth, families } from './supabase-client.js';
+
+const $ = s => document.querySelector(s);
+let mode = 'in'; // 'in' | 'up'
+
+function msg(el, text, kind='info'){ el.className = 'msg show ' + kind; el.textContent = text; }
+function clearMsg(el){ el.className = 'msg'; }
+
+// ---- alternar Entrar / Crear cuenta ----
+$('#tabIn').onclick = () => setMode('in');
+$('#tabUp').onclick = () => setMode('up');
+function setMode(m){
+  mode = m;
+  $('#tabIn').classList.toggle('on', m==='in');
+  $('#tabUp').classList.toggle('on', m==='up');
+  $('#nameField').style.display = m==='up' ? 'block' : 'none';
+  $('#doAuth').textContent = m==='up' ? 'Crear cuenta' : 'Entrar';
+  clearMsg($('#authMsg'));
+}
+
+// ---- email + contraseña ----
+$('#doAuth').onclick = async () => {
+  const email = $('#email').value.trim(), pass = $('#pass').value;
+  if(!email || !pass){ return msg($('#authMsg'),'Rellena email y contraseña.','err'); }
+  msg($('#authMsg'),'Un momento…','info');
+  const res = mode==='up'
+    ? await auth.signUpEmail(email, pass, $('#dname').value.trim())
+    : await auth.signInEmail(email, pass);
+  if(res.error) return msg($('#authMsg'), res.error.message, 'err');
+  if(mode==='up' && !res.data.session){
+    return msg($('#authMsg'),'Cuenta creada. Revisa tu email para confirmarla (o desactiva "Confirm email" en Supabase para pruebas).','ok');
+  }
+  // si hay sesión, onChange se encarga de mostrar la vista de familia
+};
+
+// ---- enlace mágico ----
+$('#doMagic').onclick = async () => {
+  const email = $('#email').value.trim();
+  if(!email){ return msg($('#authMsg'),'Escribe tu email arriba primero.','err'); }
+  const { error } = await auth.sendMagicLink(email);
+  if(error) return msg($('#authMsg'), error.message, 'err');
+  msg($('#authMsg'),'Te he enviado un enlace a '+email+'. Ábrelo desde este mismo dispositivo.','ok');
+};
+
+$('#signOut').onclick = () => auth.signOut();
+
+// ---- crear / unirse a familia ----
+$('#doCreate').onclick = async () => {
+  const name = $('#famName').value.trim();
+  if(!name) return msg($('#famMsg'),'Ponle un nombre a la familia.','err');
+  try{ await families.create(name); $('#famName').value=''; msg($('#famMsg'),'Familia creada ✓','ok'); loadFamilies(); }
+  catch(e){ msg($('#famMsg'), e.message, 'err'); }
+};
+$('#doJoin').onclick = async () => {
+  const code = $('#famCode').value.trim();
+  if(!code) return msg($('#famMsg'),'Escribe el código de invitación.','err');
+  try{ await families.join(code); $('#famCode').value=''; msg($('#famMsg'),'¡Te has unido! ✓','ok'); loadFamilies(); }
+  catch(e){ msg($('#famMsg'), e.message, 'err'); }
+};
+
+let myFamilies = [];
+async function loadFamilies(){
+  try{
+    myFamilies = await families.mine();
+    const el = $('#famList');
+    if(!myFamilies.length){
+      el.innerHTML = '<p style="color:var(--muted);font-size:13px">Aún no perteneces a ninguna familia. Crea una o únete con un código.</p>';
+      return;
+    }
+    el.innerHTML = myFamilies.map((f,i) => `
+      <div class="fam">
+        <div class="fam-top">
+          <div><div class="n">${f.name}</div><div class="role">${f.role==='admin'?'Administrador':'Miembro'}</div></div>
+          <span class="code" title="Código para invitar a la familia">${f.invite_code}</span>
+        </div>
+        <button class="btn primary enter" data-i="${i}">Entrar al semanario →</button>
+      </div>`).join('');
+    el.querySelectorAll('.enter').forEach(b => b.onclick = () => enterApp(myFamilies[+b.dataset.i]));
+  }catch(e){ msg($('#famMsg'), e.message, 'err'); }
+}
+
+// Guarda la familia elegida y entra en la app
+function enterApp(fam){
+  localStorage.setItem('semanario.family', JSON.stringify({ id: fam.id, name: fam.name, invite_code: fam.invite_code, role: fam.role }));
+  window.location.href = 'index.html';
+}
+
+// ---- reaccionar a la sesión ----
+auth.onChange(user => render(user));
+render(await auth.currentUser());
+
+function render(user){
+  const logged = !!user;
+  $('#authView').classList.toggle('hidden', logged);
+  $('#famView').classList.toggle('hidden', !logged);
+  $('#headSub').textContent = logged ? 'Elige o crea tu familia' : 'Entra para empezar';
+  if(logged){ $('#whoami').textContent = user.email; loadFamilies(); }
+}
+</script>
+</body>
+</html>

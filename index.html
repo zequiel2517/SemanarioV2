@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Semanario V2 · vista semana + editor (mockup)</title>
+<style>
+:root{
+  --orange:#ff6b35; --orange-dark:#e85a28;
+  --bg:#f2f2f4; --card:#fff; --ink:#2b2b30; --muted:#8a8a94; --line:#ececf0;
+  --sun-bg:#fff3e6; --sun-bd:#ffd4a8; --moon-bg:#eef5ff; --moon-bd:#b8daff;
+  --verano:#ff8c42; --invierno:#4f9bd6; --anual:#2a9d8f; --media:#d69412;
+  --shadow:0 4px 18px rgba(30,20,10,.10);
+  --font: ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box} html,body{margin:0}
+body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -140px,#ffe9dd,transparent 70%),var(--bg);
+  color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased; padding-bottom:50px}
+.wrap{max-width:440px; margin:0 auto; padding:0 14px}
+.caption{color:var(--muted); font-size:12.5px; line-height:1.5; text-align:center; padding:16px 6px 6px}
+.caption b{color:var(--ink)}
+
+/* barra superior (nivel semanario) */
+.topbar{position:sticky; top:0; z-index:60; margin:10px 0 12px;
+  background:linear-gradient(135deg,var(--orange),var(--orange-dark)); color:#fff; border-radius:16px;
+  padding:12px 14px; box-shadow:var(--shadow); display:flex; align-items:center; gap:10px}
+.topbar .brand{flex:1; min-width:0}
+.topbar .brand h1{margin:0; font-size:17px; font-weight:800}
+.topbar .brand .wk{font-size:11.5px; opacity:.9}
+.nav{display:flex; gap:5px}
+.nav button{border:none; background:rgba(255,255,255,.18); color:#fff; width:30px; height:30px; border-radius:9px; font-size:15px; cursor:pointer; font-family:inherit}
+.compra-btn{position:relative; border:none; cursor:pointer; font-family:inherit; background:rgba(255,255,255,.2);
+  color:#fff; font-weight:800; font-size:13px; padding:10px 12px; border-radius:12px; display:flex; align-items:center; gap:7px}
+.compra-btn:hover{background:rgba(255,255,255,.3)}
+.compra-btn .count{background:#fff; color:var(--orange-dark); font-size:10.5px; font-weight:800; min-width:18px; height:18px; border-radius:999px; display:grid; place-items:center; padding:0 4px}
+
+/* ---------- TARJETA PEQUEÑA DEL DÍA (vista semana, estilo boceto) ---------- */
+.week{display:flex; flex-direction:column; gap:11px; touch-action:pan-y}
+.week.in-next{animation:inR .2s ease}
+.week.in-prev{animation:inL .2s ease}
+@keyframes inR{from{opacity:0; transform:translateX(26px)}to{opacity:1; transform:none}}
+@keyframes inL{from{opacity:0; transform:translateX(-26px)}to{opacity:1; transform:none}}
+#weekLabel{cursor:pointer}
+.day-card{display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); border-radius:14px; overflow:hidden;
+  box-shadow:var(--shadow); background:#fff; cursor:pointer; border:2px solid transparent; transition:transform .1s, border-color .15s}
+.day-card:hover{transform:translateY(-1px)}
+.day-card.marked{border-color:#bfe8cd}
+.dc-hl{background:var(--orange); color:#fff; padding:7px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0; overflow:hidden}
+.dc-hr{background:var(--orange); color:#fff; padding:7px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px; border-left:1px solid rgba(255,255,255,.35); min-width:0; overflow:hidden}
+.dcd{display:flex; align-items:baseline; gap:6px}
+.dcd .l{font-size:19px; font-weight:800}
+.dcd .d{font-size:11px; opacity:.95; text-transform:uppercase; letter-spacing:.3px}
+.dc-cart{display:flex; align-items:center; gap:4px; background:rgba(0,0,0,.18); padding:3px 7px; border-radius:8px; cursor:pointer; font-size:11px}
+.dc-cart input{margin:0; width:13px; height:13px; accent-color:#fff}
+.dc-hr .evlbl{font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.3px}
+.dc-hr .plus{background:rgba(255,255,255,.28); width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:14px; font-weight:700}
+
+.dc-meals{padding:8px; display:flex; flex-direction:column; gap:6px; min-width:0; overflow:hidden}
+.mchip{border-radius:9px; padding:6px 8px; display:flex; align-items:center; gap:6px; overflow:hidden; min-width:0}
+.mchip.sun{background:var(--sun-bg); border:1px solid var(--sun-bd)}
+.mchip.moon{background:var(--moon-bg); border:1px solid var(--moon-bd)}
+.mchip .ic{font-size:13px; flex:none}
+.mchip .book{flex:none; border:none; background:#2a9d8f22; color:#1f7a6e; width:22px; height:22px; border-radius:6px; font-size:11px; cursor:pointer}
+.mchip .book:hover{background:#2a9d8f33}
+.mchip .empty{font-size:11px; color:#c0808a; opacity:.7; font-style:italic}
+
+.dc-events{padding:8px; background:#f7f7f9; max-height:158px; overflow-y:auto; overflow-x:hidden; min-width:0}
+.dc-events .none{font-size:10.5px; color:#c2c2ca; padding:6px 2px}
+.evrow{background:#fff; border-radius:7px; padding:4px 7px; border-left:3px solid var(--muted); box-shadow:0 1px 3px rgba(0,0,0,.05); margin-bottom:4px; min-width:0; overflow:hidden}
+.evrow:last-child{margin-bottom:0}
+.evrow .t{font-size:9px; font-weight:800}
+
+/* marquee */
+.mq{overflow:hidden; white-space:nowrap; min-width:0; flex:1}
+.mq>span{display:inline-block; font-size:11px; color:#3a3a40; font-weight:600}
+.evrow .mq>span{font-size:10px}
+.mq.run>span{animation:marq 9s linear infinite}
+@keyframes marq{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ---------- EDITOR (modal al pinchar una tarjeta) ---------- */
+.backdrop{position:fixed; inset:0; background:rgba(20,15,10,.45); display:grid; place-items:start center; padding:0; z-index:100}
+.backdrop.center{place-items:center; padding:16px}
+.backdrop[hidden]{display:none}
+.editor{width:100%; max-width:440px; background:var(--card); border-radius:0 0 22px 22px; box-shadow:0 8px 40px rgba(0,0,0,.25);
+  max-height:94vh; display:flex; flex-direction:column; animation:up .22s ease}
+@keyframes up{from{transform:translateY(-24px); opacity:.6}to{transform:translateY(0); opacity:1}}
+.ed-head{background:linear-gradient(135deg,var(--orange),var(--orange-dark)); color:#fff; padding:max(14px,env(safe-area-inset-top)) 16px 14px;
+  border-radius:0; display:flex; align-items:center; justify-content:space-between; gap:10px; flex:none}
+.ed-head .day{display:flex; align-items:baseline; gap:9px}
+.ed-head .day .l{font-size:28px; font-weight:800; line-height:1}
+.ed-head .day .d{font-size:13px; opacity:.95}
+.ed-head .right{display:flex; align-items:center; gap:10px}
+.switch{display:inline-flex; align-items:center; gap:8px; cursor:pointer; user-select:none}
+.switch .lbl{font-size:11px; font-weight:700; opacity:.97; text-align:right; line-height:1.1}
+.track{width:38px; height:22px; border-radius:20px; background:rgba(0,0,0,.25); position:relative; transition:.18s; flex:none}
+.knob{position:absolute; top:2.5px; left:2.5px; width:17px; height:17px; border-radius:50%; background:#fff; transition:.18s}
+.switch.on .track{background:#1f9d55}
+.switch.on .knob{left:18.5px}
+.x-btn{border:none; background:rgba(255,255,255,.2); width:30px; height:30px; border-radius:50%; font-size:18px; cursor:pointer; color:#fff; flex:none}
+.x-btn:hover{background:rgba(255,255,255,.32)}
+
+.ed-body{padding:12px 16px; overflow:auto}
+.sec-head{display:flex; align-items:center; gap:8px; margin:12px 2px 8px}
+.sec-head:first-child{margin-top:2px}
+.sec-head .ic{font-size:16px} .sec-head h3{margin:0; font-size:14px; font-weight:800} .sec-head .spacer{flex:1}
+.mini-link{background:none; border:none; color:var(--orange-dark); font-weight:800; font-size:12px; cursor:pointer; font-family:inherit; padding:4px 6px; border-radius:8px}
+.mini-link:hover{background:#fff2ea}
+
+.dish{position:relative; margin-bottom:8px}
+.dish-row{display:flex; align-items:center; gap:8px; background:#fafafb; border:1.5px solid var(--line); border-radius:12px; padding:4px 6px 4px 12px; transition:border-color .15s, box-shadow .15s}
+.dish-row:focus-within{border-color:var(--orange); box-shadow:0 0 0 3px #ffdcca}
+.dish-row.linked{background:#fff}
+.dish .badge-n{font-size:10px; font-weight:800; color:var(--muted); flex:none; width:16px}
+.dish input{flex:1; border:none; background:transparent; font-family:inherit; font-size:14px; color:var(--ink); padding:9px 2px; outline:none; min-width:0}
+.dish input::placeholder{color:#b6b6bf; font-weight:500}
+.btn-ic{flex:none; border:none; border-radius:9px; width:32px; height:32px; cursor:pointer; font-size:14px; display:grid; place-items:center; font-family:inherit}
+.btn-book{background:#e6f6f3; color:#1f7a6e} .btn-book:hover{background:#d3efe9} .btn-book[hidden]{display:none}
+.btn-x{background:#f2f2f4; color:#9a9aa2} .btn-x:hover{background:#eaeaee; color:#e0563c}
+.linked-tags{display:flex; gap:6px; margin:5px 0 0 24px; flex-wrap:wrap}
+.pill{font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px}
+.pill.season{color:#fff}
+.pill.verano{background:var(--verano)} .pill.invierno{background:var(--invierno)} .pill.anual{background:var(--anual)}
+.pill.time{background:#f0eef7; color:#6a5aa8} .pill.diff{background:#f3f0ea; color:#8a6d2a}
+
+.drop{position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:40; background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:0 12px 30px rgba(20,15,10,.16); overflow:hidden; padding:5px}
+.drop[hidden]{display:none}
+.drop-lbl{font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); padding:7px 10px 5px}
+.opt{display:flex; align-items:center; gap:9px; width:100%; text-align:left; border:none; background:none; font-family:inherit; cursor:pointer; padding:9px 10px; border-radius:10px; color:var(--ink)}
+.opt:hover{background:#fff4ee}
+.opt .star{color:var(--verano); font-size:12px; width:12px; flex:none}
+.opt .nm{font-size:13.5px; font-weight:700; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.opt .meta{display:flex; gap:5px; flex:none}
+.opt .meta .m{font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:999px}
+.opt-new{display:flex; align-items:center; gap:8px; width:100%; text-align:left; border:1.5px dashed #ffcbb0; background:#fff8f4; font-family:inherit; cursor:pointer; padding:10px; border-radius:10px; color:var(--orange-dark); font-weight:800; font-size:12.5px; margin-top:4px}
+.opt-new:hover{background:#fff0e7}
+
+.ev-edit{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px}
+.ev-item{display:flex; align-items:center; gap:10px; background:#fafafb; border-radius:11px; padding:9px 11px; border-left:4px solid var(--muted)}
+.ev-item .hora{font-size:11px; font-weight:800; flex:none; width:42px}
+.ev-item .titulo{font-size:13px; font-weight:600; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ev-none{font-size:12.5px; color:#b6b6bf; padding:4px 2px}
+
+.ed-foot{display:flex; gap:9px; padding:8px 16px 16px; flex:none}
+.btn{border:none; border-radius:13px; padding:13px 14px; font-family:inherit; font-weight:800; font-size:13.5px; cursor:pointer}
+.btn.primary{background:var(--orange); color:#fff; flex:1} .btn.primary:hover{background:var(--orange-dark)}
+
+/* modales centrados (receta / compra) */
+.sheet{width:100%; max-width:400px; background:#fff; border-radius:20px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.3); max-height:88vh; display:flex; flex-direction:column}
+.sheet-head{padding:15px 18px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--line)}
+.sheet-head h2{margin:0; font-size:16px; font-weight:800}
+.sheet-head .sub{font-size:11.5px; color:var(--muted); font-weight:600}
+.x-dark{border:none; background:#f2f2f4; width:30px; height:30px; border-radius:50%; font-size:17px; cursor:pointer; color:#7a7a82; flex:none; margin-left:auto}
+.sheet-body{padding:16px 18px; overflow:auto}
+.recipe-meta{display:flex; gap:7px; margin-bottom:14px; flex-wrap:wrap}
+.recipe-desc{font-size:13.5px; line-height:1.55; color:#44444c; margin:0 0 16px}
+.ing-list{list-style:none; margin:0 0 16px; padding:0}
+.ing-list li{display:flex; justify-content:space-between; font-size:13.5px; padding:7px 2px; border-bottom:1px dashed var(--line)}
+.ing-list .q{color:var(--muted); font-weight:700}
+.yt{display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; background:#ff2f2f; color:#fff; font-weight:800; font-size:13.5px; padding:12px; border-radius:12px}
+.shop-note{font-size:12px; color:var(--muted); background:#fff8f4; border:1px solid #ffe1d1; border-radius:10px; padding:9px 11px; margin-bottom:14px; line-height:1.5}
+.shop-days{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px}
+.chip{font-size:11px; font-weight:800; background:#e7f7ec; color:#1f7a4a; padding:5px 10px; border-radius:999px}
+.shop-group h4{margin:6px 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted)}
+.shop-item{display:flex; align-items:center; gap:11px; padding:9px 4px; border-bottom:1px solid var(--line)}
+.shop-item input{width:19px; height:19px; accent-color:var(--orange); flex:none}
+.shop-item .nm{font-size:14px; flex:1}
+.shop-item .q{font-size:12.5px; color:var(--muted); font-weight:700}
+.shop-item.have .nm{text-decoration:line-through; color:#bcbcc4}
+.pantry .shop-item{opacity:.55} .pantry .nm{text-decoration:line-through}
+.wa{display:flex; align-items:center; justify-content:center; gap:9px; text-decoration:none; background:#25d366; color:#0a3d1e; font-weight:800; font-size:14px; padding:14px; border-radius:13px; margin-top:12px}
+
+/* formulario de receta */
+.edit-r{margin-left:auto; margin-right:8px; border:none; background:#fff2ea; color:var(--orange-dark); font-weight:800; font-size:12.5px; padding:7px 12px; border-radius:9px; cursor:pointer; font-family:inherit}
+.edit-r:hover{background:#ffe4d4}
+.saved-chip{font-size:11px; font-weight:800; color:#1f7a4a; background:#e7f7ec; padding:4px 9px; border-radius:999px; opacity:0; transition:opacity .2s; margin-right:8px}
+.saved-chip.show{opacity:1}
+.autosave-hint{font-size:11.5px; color:var(--muted); font-weight:700; align-self:center; margin-right:auto}
+.field{margin-bottom:13px}
+.field>label{display:block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); margin-bottom:6px}
+.field .lbl-hint{text-transform:none; letter-spacing:0; font-weight:600; color:#b6b6bf}
+.field input, .field textarea{width:100%; border:1.5px solid var(--line); border-radius:11px; padding:11px 12px; font-family:inherit; font-size:14px; color:var(--ink); background:#fafafb; outline:none}
+.field input:focus, .field textarea:focus{border-color:var(--orange); box-shadow:0 0 0 3px #ffdcca; background:#fff}
+.field textarea{resize:vertical; line-height:1.5}
+.frow{display:flex; gap:10px} .frow .field{flex:1; min-width:0}
+.seg{display:flex; gap:6px}
+.seg button{flex:1; border:1.5px solid var(--line); background:#fafafb; border-radius:10px; padding:9px 4px; font-family:inherit; font-weight:700; font-size:11.5px; color:#6a6a72; cursor:pointer}
+.seg button.on{border-color:var(--orange); background:#fff2ea; color:var(--orange-dark)}
+.ing-row{display:flex; gap:6px; margin-bottom:6px}
+.ing-row input{border:1.5px solid var(--line); border-radius:10px; padding:9px 10px; font-family:inherit; font-size:13px; background:#fafafb; outline:none; min-width:0}
+.ing-row input:focus{border-color:var(--orange); background:#fff}
+.ing-row .ing-n{flex:1} .ing-row .ing-q{width:62px} .ing-row .ing-u{width:70px}
+.ing-del{border:none; background:#f2f2f4; color:#9a9aa2; width:34px; border-radius:10px; font-size:16px; cursor:pointer; flex:none}
+.ing-del:hover{background:#eaeaee; color:#e0563c}
+.add-ing{border:1.5px dashed #ffcbb0; background:#fff8f4; color:var(--orange-dark); font-weight:800; font-size:12.5px; border-radius:10px; padding:9px; width:100%; cursor:pointer; font-family:inherit; margin-top:2px}
+.add-ing:hover{background:#fff0e7}
+
+.toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px); background:#2b2b30; color:#fff; padding:12px 18px; border-radius:12px; font-size:13px; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,.3); opacity:0; pointer-events:none; transition:.25s; z-index:200; max-width:340px; text-align:center}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important} .mq.run>span{animation:none} }
+:focus-visible{outline:3px solid #ffb08c; outline-offset:2px; border-radius:6px}
+
+.fam-name{font-size:12px; font-weight:800; color:#fff; opacity:.95; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.logout-btn{border:none; background:rgba(255,255,255,.18); color:#fff; font-family:inherit; font-weight:800; font-size:12px; padding:9px 11px; border-radius:11px; cursor:pointer}
+.logout-btn:hover{background:rgba(255,255,255,.3)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="caption">
+  <b>Mockup V2 · vista semana</b> — cada día es tu tarjeta pequeña (Comida/Cena a la izquierda, Eventos a la derecha).<br>
+  <b>Toca una tarjeta</b> para abrir el editor y modificarla. El <b>🛒</b> de cada cabecera incluye ese día en la compra;
+  la <b>Lista</b> global está arriba.
+</p>
+
+<div class="topbar">
+  <div class="brand"><h1>Semanario Familiar</h1><span class="wk" id="weekLabel" title="Volver a la semana actual">Semana del 2 – 8 ago</span></div>
+  <div class="nav"><button id="prevWeek" title="Semana anterior">‹</button><button id="nextWeek" title="Semana siguiente">›</button></div>
+  <span class="fam-name" id="famName"></span><button class="logout-btn" id="logoutBtn" title="Cerrar sesión">Salir</button><button class="compra-btn" id="openShop">🛒 <span class="count" id="shopCount">0</span></button>
+</div>
+
+<div class="week" id="week"></div>
+
+</div>
+
+<!-- Editor (modal inferior) -->
+<div class="backdrop" id="editorModal" hidden>
+  <div class="editor">
+    <div class="ed-head">
+      <div class="day"><span class="l" id="edL">V</span><span class="d" id="edD">Viernes 6 agosto</span></div>
+      <div class="right">
+        <div class="switch" id="cartSwitch" role="switch" tabindex="0"><span class="lbl">🛒 En la<br>compra</span><span class="track"><span class="knob"></span></span></div>
+        <button class="x-btn" id="closeEditor">×</button>
+      </div>
+    </div>
+    <div class="ed-body">
+      <div class="sec-head"><span class="ic">☀️</span><h3>Comida</h3><span class="spacer"></span>
+        <button class="mini-link" id="unicoComida">Plato único</button><button class="mini-link" id="addComida">＋ Plato</button></div>
+      <div id="comidaList"></div>
+      <div class="sec-head"><span class="ic">🌙</span><h3>Cena</h3><span class="spacer"></span>
+        <button class="mini-link" id="unicoCena">Dos platos</button><button class="mini-link" id="addCena">＋ Plato</button></div>
+      <div id="cenaList"></div>
+      <div class="sec-head"><span class="ic">📌</span><h3>Eventos</h3><span class="spacer"></span><button class="mini-link" id="addEvent">＋ Evento</button></div>
+      <ul class="ev-edit" id="eventEditList"></ul>
+    </div>
+    <div class="ed-foot"><span class="autosave-hint">✓ Se guarda solo</span><button class="btn primary" id="save">Hecho</button></div>
+  </div>
+</div>
+
+<!-- Modal receta -->
+<div class="backdrop center" id="recipeModal" hidden>
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="rTitle">Receta</h2><span id="rSeason"></span><button class="edit-r" id="rEdit">✏️ Editar</button><button class="x-dark" data-close="recipeModal" style="margin-left:0">×</button></div>
+    <div class="sheet-body">
+      <div class="recipe-meta" id="rMeta"></div>
+      <p class="recipe-desc" id="rDesc"></p>
+      <h4 style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Ingredientes</h4>
+      <ul class="ing-list" id="rIng"></ul>
+      <a class="yt" id="rLink" href="#" target="_blank" rel="noopener">▶ Ver preparación en YouTube</a>
+    </div>
+  </div>
+</div>
+
+<!-- Modal FORMULARIO de receta (crear/editar) -->
+<div class="backdrop center" id="recipeFormModal" hidden>
+  <div class="sheet">
+    <div class="sheet-head">
+      <div style="flex:1"><h2 id="rfTitle">Editar receta</h2><div class="sub">Todo opcional · se guarda solo</div></div>
+      <span class="saved-chip" id="rfSaved">Guardado ✓</span>
+      <button class="x-dark" id="rfClose" style="margin-left:0">×</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field"><label>Nombre</label><input id="rfName" type="text" placeholder="Nombre del plato"></div>
+      <div class="field"><label>Temporada</label>
+        <div class="seg" id="rfSeason">
+          <button data-v="verano">☀ Verano</button>
+          <button data-v="invierno">❄ Invierno</button>
+          <button data-v="todo el año">Todo el año</button>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Tiempo (min)</label><input id="rfTime" type="number" min="0" placeholder="—"></div>
+        <div class="field"><label>Dificultad</label>
+          <div class="seg" id="rfDiff">
+            <button data-v="fácil">Fácil</button>
+            <button data-v="media">Media</button>
+            <button data-v="difícil">Difícil</button>
+          </div>
+        </div>
+      </div>
+      <div class="field"><label>Preparación</label><textarea id="rfDesc" rows="4" placeholder="Cómo se hace…"></textarea></div>
+      <div class="field">
+        <label>Ingredientes <span class="lbl-hint">— alimentan la lista de la compra</span></label>
+        <div id="rfIng"></div>
+        <button class="add-ing" id="rfAddIng">＋ Añadir ingrediente</button>
+      </div>
+      <div class="field"><label>Enlace (vídeo, web…)</label><input id="rfLink" type="url" placeholder="https://youtube.com/…"></div>
+      <datalist id="unitsList">
+        <option value="g"></option><option value="kg"></option><option value="ml"></option><option value="l"></option>
+        <option value="ud"></option><option value="cda"></option><option value="cdta"></option><option value="diente"></option>
+        <option value="dientes"></option><option value="lata"></option><option value="pizca"></option><option value="manojo"></option>
+        <option value="lomos"></option><option value="loncha"></option><option value="vaso"></option>
+      </datalist>
+    </div>
+    <div class="ed-foot" style="border-top:1px solid var(--line)">
+      <span class="autosave-hint">✓ Se guarda solo</span>
+      <button class="btn primary" id="rfDone">Hecho</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal lista de compra GLOBAL -->
+<div class="backdrop center" id="shopModal" hidden>
+  <div class="sheet">
+    <div class="sheet-head"><div><h2>🛒 Lista de la compra</h2><div class="sub" id="shopSub"></div></div><button class="x-dark" data-close="shopModal">×</button></div>
+    <div class="sheet-body">
+      <div class="shop-note">Junta los ingredientes de <b>todos los días marcados con 🛒</b>, sumando lo que se repite. Los básicos de la <b>despensa</b> quedan tachados aparte.</div>
+      <div class="shop-days" id="shopDays"></div>
+      <div class="shop-group"><h4>Para comprar</h4><div id="shopBuy"></div></div>
+      <div class="shop-group pantry"><h4>Ya en tu despensa</h4><div id="shopPantry"></div></div>
+      <a class="wa" id="waBtn" href="#" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { auth, recipes as recipesApi, week as weekApi, shopping as shoppingApi, iso, addDays, mondayOf } from './supabase-client.js';
+
+const $=s=>document.querySelector(s);
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cap=s=>s?s[0].toUpperCase()+s.slice(1):'';
+const fmt=n=>{const v=Number(n); return Number.isInteger(v)?v:v.toFixed(1);};
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3000);}
+function mq(text){const s=text||'';const run=s.length>24;const t=run?s+'        '+s:s;return `<div class="mq ${run?'run':''}"><span>${esc(t)}</span></div>`;}
+function flashSaved(){const el=document.querySelector('.saved-chip');if(!el)return;el.classList.add('show');clearTimeout(el._h);el._h=setTimeout(()=>el.classList.remove('show'),1200);}
+
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const MESL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DOW=['L','M','X','J','V','S','D'];
+const DOWNAME=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const UNITS=['ud','g','kg','ml','l','cucharadita','cucharada','chorrito','vaso','diente','pizca','puñado','manojo','loncha','lomos','bote','lata','hoja'];
+const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+const seasonClass=t=>t==='verano'?'verano':t==='invierno'?'invierno':'anual';
+const seasonLabel=t=>t==='verano'?'☀ Verano':t==='invierno'?'❄ Invierno':'Todo el año';
+const slotOf=key=>key==='comida'?'lunch':'dinner';
+
+// ================= Sesión / familia (guard) =================
+let user=await auth.currentUser();
+let family=null;
+try{ family=JSON.parse(localStorage.getItem('semanario.family')||'null'); }catch(e){}
+if(!user||!family){ location.replace('login.html'); }
+$('#famName').textContent=family?.name||'';
+$('#logoutBtn').onclick=async()=>{ await auth.signOut(); localStorage.removeItem('semanario.family'); location.replace('login.html'); };
+
+// ================= Recetas (cache mapeada a la UI) =================
+let RECIPES=[];
+const mapRecipe=r=>({id:r.id,nombre:r.title,temporada:r.season||'todo el año',tiempo:r.prep_minutes,dificultad:r.difficulty,desc:r.description||'',enlace:r.video_url||'',fav:!!r.is_favorite,usos:r.uses||0,ing:(r.recipe_ingredients||[]).map(x=>[x.name,x.quantity,x.unit])});
+const byId=id=>RECIPES.find(r=>r.id===id);
+async function loadRecipes(){ try{ RECIPES=(await recipesApi.list(family.id)).map(mapRecipe); }catch(e){ toast('No pude cargar recetas: '+e.message); } }
+
+// ================= Semana (cache por offset) =================
+let weekOffset=0, current=null, openRid=null, formRid=null;
+const cache={};
+const mondayForOffset=off=>addDays(mondayOf(new Date()), off*7);
+function toUiDay(d,i){
+  const date=new Date(d.date+'T00:00:00');
+  return {date:d.date,l:DOW[i],fecha:date.getDate()+' '+MES[date.getMonth()],
+    nombre:DOWNAME[i]+' '+date.getDate()+' '+MESL[date.getMonth()],
+    cart:!!d.include_in_shopping,
+    comida:d.comida.map(x=>({id:x.id,rid:x.recipe_id,texto:x.title||x.free_text||''})),
+    cena:d.cena.map(x=>({id:x.id,rid:x.recipe_id,texto:x.title||x.free_text||''})),
+    eventos:d.eventos.map(e=>({id:e.id,recurring_id:e.recurring_id,hora:(e.at_time||'').slice(0,5),titulo:e.title,color:e.color||'#8a8a94',recurring:!!e.recurring}))};
+}
+async function getWeek(off){
+  if(!cache[off]){ const days=await weekApi.get(family.id, mondayForOffset(off)); cache[off]=days.map(toUiDay); }
+  return cache[off];
+}
+function rangeLabel(a,b){return a.getMonth()===b.getMonth()?`${a.getDate()} – ${b.getDate()} ${MES[b.getMonth()]}`:`${a.getDate()} ${MES[a.getMonth()]} – ${b.getDate()} ${MES[b.getMonth()]}`;}
+
+// ================= Vista semana =================
+async function renderWeek(dir){
+  const wk=$('#week');
+  let days;
+  try{ if(!cache[weekOffset]) wk.innerHTML='<p style="padding:24px;text-align:center;color:#8a8a94">Cargando…</p>'; days=await getWeek(weekOffset); }
+  catch(e){ wk.innerHTML=''; toast('Error cargando la semana: '+e.message); return; }
+  wk.innerHTML='';
+  days.forEach(d=>{
+    const card=document.createElement('div');
+    card.className='day-card'+(d.cart?' marked':'');
+    card.innerHTML=`
+      <div class="dc-hl">
+        <div class="dcd"><span class="l">${d.l}</span><span class="d">${d.fecha}</span></div>
+        <label class="dc-cart"><input type="checkbox" ${d.cart?'checked':''}><span>🛒</span></label>
+      </div>
+      <div class="dc-hr"><span class="evlbl">Eventos</span><span class="plus">+</span></div>
+      <div class="dc-meals">${mealChip('sun','☀️',d.comida)}${mealChip('moon','🌙',d.cena)}</div>
+      <div class="dc-events">${d.eventos.length?d.eventos.map(e=>`<div class="evrow" style="border-left-color:${e.color}"><div class="t" style="color:${e.color}">${e.hora}${e.recurring?' ♻':''}</div>${mq(e.titulo)}</div>`).join(''):'<div class="none">Sin eventos</div>'}</div>`;
+    const cb=card.querySelector('.dc-cart input');
+    card.querySelector('.dc-cart').addEventListener('click',e=>e.stopPropagation());
+    cb.addEventListener('change',async()=>{ d.cart=cb.checked; card.classList.toggle('marked',d.cart); updateCount(days); try{ await weekApi.setDayShopping(family.id,d.date,d.cart);}catch(err){toast(err.message);} });
+    card.querySelectorAll('.book').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openRecipe(b.dataset.rid);}));
+    card.addEventListener('click',()=>openEditor(d));
+    wk.appendChild(card);
+  });
+  updateCount(days);
+  const mon=mondayForOffset(weekOffset);
+  $('#weekLabel').textContent='Semana del '+rangeLabel(mon,addDays(mon,6));
+  if(dir){ wk.classList.remove('in-next','in-prev'); void wk.offsetWidth; wk.classList.add(dir>0?'in-next':'in-prev'); }
+}
+function mealChip(cls,icon,dishes){
+  const named=dishes.filter(x=>x.texto);
+  if(!named.length) return `<div class="mchip ${cls}"><span class="ic">${icon}</span><span class="empty">Sin plato — toca para añadir</span></div>`;
+  const text=named.map(x=>x.texto).join(' · ');
+  const book=named.find(x=>x.rid);
+  return `<div class="mchip ${cls}"><span class="ic">${icon}</span>${mq(text)}${book?`<button class="book" data-rid="${book.rid}" title="Ver receta">📖</button>`:''}</div>`;
+}
+function updateCount(days){ $('#shopCount').textContent=days.filter(d=>d.cart).length; }
+
+// ================= Editor de día =================
+function openEditor(day){
+  current=day;
+  $('#edL').textContent=day.l;
+  $('#edD').innerHTML=day.nombre;
+  syncCartSwitch();
+  $('#unicoComida').textContent=day.comida.length>1?'Plato único':'Dos platos';
+  $('#unicoCena').textContent=day.cena.length>1?'Plato único':'Dos platos';
+  renderDishes(); renderEventEdit();
+  $('#editorModal').hidden=false;
+}
+function closeEditor(){ $('#editorModal').hidden=true; renderWeek(); }
+function syncCartSwitch(){ const s=$('#cartSwitch'); s.classList.toggle('on',current.cart); s.setAttribute('aria-checked',current.cart); }
+
+function renderDishes(){ renderDishList('comida',$('#comidaList')); renderDishList('cena',$('#cenaList')); }
+function renderDishList(key,container){
+  container.innerHTML='';
+  current[key].forEach((dish,i)=>{
+    const rec=dish.rid?byId(dish.rid):null;
+    const wrap=document.createElement('div'); wrap.className='dish';
+    wrap.innerHTML=`
+      <div class="dish-row ${rec?'linked':''}">
+        <span class="badge-n">${i+1}º</span>
+        <input type="text" value="${esc(dish.texto)}" placeholder="¿Qué plato? Escribe para buscar…" autocomplete="off" spellcheck="false">
+        <button class="btn-ic btn-book" title="Ver receta" ${rec?'':'hidden'}>📖</button>
+        ${current[key].length>1?`<button class="btn-ic btn-x" title="Quitar plato">×</button>`:''}
+      </div>
+      ${rec?`<div class="linked-tags"><span class="pill season ${seasonClass(rec.temporada)}">${seasonLabel(rec.temporada)}</span>${rec.tiempo?`<span class="pill time">⏱ ${rec.tiempo} min</span>`:''}${rec.dificultad?`<span class="pill diff">${cap(rec.dificultad)}</span>`:''}</div>`:''}
+      <div class="drop" hidden></div>`;
+    const input=wrap.querySelector('input'),drop=wrap.querySelector('.drop'),book=wrap.querySelector('.btn-book'),del=wrap.querySelector('.btn-x');
+    input.addEventListener('focus',()=>openDrop(key,i,input,drop));
+    input.addEventListener('input',()=>{dish.texto=input.value;openDrop(key,i,input,drop);});
+    input.addEventListener('change',()=>{ if(!dish.rid) commitFree(key,i,input.value); });
+    input.addEventListener('blur',()=>setTimeout(()=>drop.hidden=true,150));
+    if(book)book.addEventListener('click',()=>{if(dish.rid)openRecipe(dish.rid);});
+    if(del)del.addEventListener('click',()=>removeDish(key,i));
+    container.appendChild(wrap);
+  });
+}
+function openDrop(key,i,input,drop){
+  const q=norm(input.value); let list,header;
+  if(!q){header='Favoritos y recientes'; list=RECIPES.slice().sort((a,b)=>(b.fav-a.fav)||(b.usos-a.usos)).slice(0,6);}
+  else{header='Resultados'; list=RECIPES.filter(r=>norm(r.nombre).includes(q)).sort((a,b)=>b.usos-a.usos).slice(0,7);}
+  let html=`<div class="drop-lbl">${header}</div>`;
+  if(!list.length && !q) html+=`<div style="padding:8px 10px;color:#b6b6bf;font-size:12.5px">Aún no tienes recetas. Escribe un plato y podrás guardarlo.</div>`;
+  list.forEach(r=>{html+=`<button class="opt" data-rid="${r.id}"><span class="star">${r.fav?'★':''}</span><span class="nm">${esc(r.nombre)}</span><span class="meta"><span class="m pill season ${seasonClass(r.temporada)}">${r.temporada==='verano'?'☀':r.temporada==='invierno'?'❄':'∙'}</span>${r.tiempo?`<span class="m pill time">⏱${r.tiempo}′</span>`:''}</span></button>`;});
+  if(q&&!list.some(r=>norm(r.nombre)===q)) html+=`<button class="opt-new">＋ Guardar "${esc(input.value.trim())}" como receta nueva</button>`;
+  drop.innerHTML=html; drop.hidden=false;
+  drop.querySelectorAll('.opt').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault();pick(key,i,byId(b.dataset.rid));drop.hidden=true;}));
+  const nw=drop.querySelector('.opt-new'); if(nw)nw.addEventListener('mousedown',e=>{e.preventDefault();drop.hidden=true;createRecipeFrom(key,i,input.value.trim());});
+}
+async function pick(key,i,recipe){
+  const dish=current[key][i];
+  try{
+    if(dish.id) await weekApi.updateDish(dish.id,{recipe_id:recipe.id,free_text:null});
+    else { const row=await weekApi.addDish(family.id,current.date,slotOf(key),{recipe_id:recipe.id,position:i}); dish.id=row.id; }
+    dish.rid=recipe.id; dish.texto=recipe.nombre; recipesApi.incrementUse(recipe.id);
+    renderDishes(); flashSaved();
+  }catch(e){ toast('No se pudo guardar: '+e.message); }
+}
+async function commitFree(key,i,text){
+  const dish=current[key][i]; text=(text||'').trim();
+  try{
+    if(!text){ if(dish.id){ await weekApi.removeDish(dish.id); dish.id=null; } dish.rid=null; dish.texto=''; }
+    else if(dish.id){ await weekApi.updateDish(dish.id,{free_text:text,recipe_id:null}); dish.rid=null; dish.texto=text; }
+    else { const row=await weekApi.addDish(family.id,current.date,slotOf(key),{free_text:text,position:i}); dish.id=row.id; dish.rid=null; dish.texto=text; }
+    flashSaved();
+  }catch(e){ toast('No se pudo guardar: '+e.message); }
+}
+async function removeDish(key,i){
+  const dish=current[key][i];
+  try{ if(dish.id) await weekApi.removeDish(dish.id); current[key].splice(i,1); renderDishes(); flashSaved(); }
+  catch(e){ toast(e.message); }
+}
+
+// ================= Eventos (solo lectura en esta fase) =================
+function renderEventEdit(){
+  const ul=$('#eventEditList');
+  ul.innerHTML=current.eventos.length
+    ? current.eventos.map(e=>`<li class="ev-item" style="border-left-color:${e.color}"><span class="hora" style="color:${e.color}">${e.hora}</span><span class="titulo">${esc(e.titulo)}${e.recurring?' <span style="color:#9b5de5">♻</span>':''}</span></li>`).join('')
+    : '<div class="ev-none">Sin eventos este día.</div>';
+}
+
+// ================= Ver receta (📖) =================
+async function openRecipe(recipeId){
+  try{
+    const full=await recipesApi.get(recipeId); const r=mapRecipe(full); openRid=recipeId;
+    $('#rTitle').textContent=r.nombre;
+    $('#rSeason').innerHTML=`<span class="pill season ${seasonClass(r.temporada)}">${seasonLabel(r.temporada)}</span>`;
+    $('#rMeta').innerHTML=[r.tiempo?`<span class="pill time">⏱ ${r.tiempo} min</span>`:'',r.dificultad?`<span class="pill diff">${cap(r.dificultad)}</span>`:''].join('');
+    $('#rDesc').textContent=r.desc||'Aún no has añadido la preparación.';
+    $('#rIng').innerHTML=r.ing.length?r.ing.map(([n,q,u])=>`<li><span>${esc(n)}</span><span class="q">${q!=null?fmt(q):''} ${u||''}</span></li>`).join(''):`<li style="border:none;color:#b6b6bf">Sin ingredientes todavía</li>`;
+    const link=$('#rLink'); if(r.enlace){link.style.display='flex';link.href=r.enlace;}else link.style.display='none';
+    $('#recipeModal').hidden=false;
+  }catch(e){ toast('No pude abrir la receta: '+e.message); }
+}
+
+// ================= Formulario de receta (crear / editar) =================
+async function createRecipeFrom(key,i,name){
+  if(!name) return;
+  try{
+    const rec=await recipesApi.upsert({family_id:family.id,title:name,season:'todo el año'});
+    await loadRecipes();
+    const dish=current[key][i];
+    if(dish.id) await weekApi.updateDish(dish.id,{recipe_id:rec.id,free_text:null});
+    else { const row=await weekApi.addDish(family.id,current.date,slotOf(key),{recipe_id:rec.id,position:i}); dish.id=row.id; }
+    dish.rid=rec.id; dish.texto=rec.title; renderDishes();
+    openRecipeForm(rec.id);
+    toast('Receta creada. Añade ingredientes cuando quieras 🙂');
+  }catch(e){ toast('No se pudo crear la receta: '+e.message); }
+}
+function setSeg(sel,val){ document.querySelectorAll(sel+' button').forEach(b=>b.classList.toggle('on', b.dataset.v===val)); }
+function segVal(sel){ const b=document.querySelector(sel+' button.on'); return b?b.dataset.v:null; }
+function ingRow(n,q,u){
+  const row=document.createElement('div'); row.className='ing-row';
+  row.innerHTML=`<input class="ing-n" placeholder="Ingrediente" value="${esc(n)}">
+    <input class="ing-q" type="number" min="0" step="any" placeholder="Cant." value="${q==null?'':q}">
+    <select class="ing-u">${UNITS.map(x=>`<option ${x===u?'selected':''}>${x}</option>`).join('')}</select>
+    <button class="ing-x" title="Quitar">×</button>`;
+  row.querySelector('.ing-n').addEventListener('change',commitIng);
+  row.querySelector('.ing-q').addEventListener('change',commitIng);
+  row.querySelector('.ing-u').addEventListener('change',commitIng);
+  row.querySelector('.ing-x').addEventListener('click',()=>{row.remove();commitIng();});
+  return row;
+}
+function renderIngRows(ing){ const box=$('#rfIng'); box.innerHTML=''; (ing&&ing.length?ing:[['','','ud']]).forEach(([n,q,u])=>box.appendChild(ingRow(n,q,u||'ud'))); }
+async function openRecipeForm(recipeId){
+  formRid=recipeId;
+  const r=mapRecipe(await recipesApi.get(recipeId));
+  $('#rfTitle').textContent='Editar receta';
+  $('#rfName').value=r.nombre||''; $('#rfTime').value=r.tiempo??''; $('#rfDesc').value=r.desc||''; $('#rfLink').value=r.enlace||'';
+  setSeg('#rfSeason', r.temporada||'todo el año'); setSeg('#rfDiff', r.dificultad||'');
+  renderIngRows(r.ing);
+  $('#recipeFormModal').hidden=false;
+}
+async function commitMeta(){
+  if(!formRid) return;
+  const patch={id:formRid, title:($('#rfName').value.trim()||'Sin nombre'), prep_minutes:$('#rfTime').value?parseInt($('#rfTime').value,10):null, season:segVal('#rfSeason')||'todo el año', difficulty:segVal('#rfDiff'), description:$('#rfDesc').value, video_url:$('#rfLink').value.trim()};
+  try{ await recipesApi.upsert(patch); flashSaved(); }catch(e){ toast(e.message); }
+}
+async function commitIng(){
+  if(!formRid) return;
+  const items=[...document.querySelectorAll('#rfIng .ing-row')].map(row=>{
+    const n=row.querySelector('.ing-n').value.trim(); if(!n) return null;
+    const q=parseFloat(row.querySelector('.ing-q').value);
+    return {name:n, quantity:isNaN(q)?null:q, unit:row.querySelector('.ing-u').value};
+  }).filter(Boolean);
+  try{ await recipesApi.saveIngredients(formRid, items); flashSaved(); }catch(e){ toast(e.message); }
+}
+async function closeRecipeForm(){
+  $('#recipeFormModal').hidden=true;
+  await loadRecipes();
+  if(current){ ['comida','cena'].forEach(k=>current[k].forEach(d=>{ if(d.rid){ const r=byId(d.rid); if(r) d.texto=r.nombre; } })); renderDishes(); }
+  renderWeek();
+}
+
+// ================= Lista de la compra (global) =================
+async function openShop(){
+  try{
+    const res=await shoppingApi.generate(family.id, mondayForOffset(weekOffset));
+    $('#shopSub').textContent=`${res.days.length} días · ${res.buy.length} productos`;
+    $('#shopDays').innerHTML=res.days.length?res.days.map(dISO=>{const d=new Date(dISO+'T00:00:00');return `<span class="chip">${DOW[(d.getDay()+6)%7]} · ${d.getDate()} ${MES[d.getMonth()]}</span>`;}).join(''):'<span style="color:#b6b6bf;font-size:13px">Ningún día marcado con 🛒</span>';
+    $('#shopBuy').innerHTML=res.buy.length?res.buy.map(x=>`<label class="shop-item"><input type="checkbox"><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada que comprar. Marca días con 🛒 y añade recetas con ingredientes.</p>';
+    $('#shopPantry').innerHTML=res.pantry.map(x=>`<label class="shop-item"><input type="checkbox" checked disabled><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join('');
+    $('#waBtn').href=shoppingApi.whatsappUrl(res);
+    $('#shopBuy').querySelectorAll('input').forEach(cb=>cb.addEventListener('change',()=>cb.closest('.shop-item').classList.toggle('have',cb.checked)));
+    $('#shopModal').hidden=false;
+  }catch(e){ toast('No pude generar la compra: '+e.message); }
+}
+
+// ================= Navegación entre semanas =================
+function goWeek(dir){ if(!dir)return; weekOffset+=dir; renderWeek(dir); }
+
+// ================= Wiring =================
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$('#'+b.dataset.close).hidden=true));
+document.querySelectorAll('.backdrop.center').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.hidden=true;}));
+$('#editorModal').addEventListener('click',e=>{if(e.target===$('#editorModal'))closeEditor();});
+$('#closeEditor').addEventListener('click',closeEditor);
+$('#openShop').addEventListener('click',openShop);
+$('#cartSwitch').addEventListener('click',async()=>{ current.cart=!current.cart; syncCartSwitch(); try{ await weekApi.setDayShopping(family.id,current.date,current.cart);}catch(e){toast(e.message);} });
+$('#addComida').addEventListener('click',()=>{if(current.comida.length<4){current.comida.push({id:null,rid:null,texto:''});renderDishes();}});
+$('#addCena').addEventListener('click',()=>{if(current.cena.length<4){current.cena.push({id:null,rid:null,texto:''});renderDishes();}});
+$('#unicoComida').addEventListener('click',async function(){ if(current.comida.length>1){ const extra=current.comida.slice(1); for(const d of extra){ if(d.id) try{await weekApi.removeDish(d.id);}catch(e){} } current.comida=[current.comida[0]]; this.textContent='Dos platos'; } else { current.comida.push({id:null,rid:null,texto:''}); this.textContent='Plato único'; } renderDishes(); });
+$('#unicoCena').addEventListener('click',async function(){ if(current.cena.length>1){ const extra=current.cena.slice(1); for(const d of extra){ if(d.id) try{await weekApi.removeDish(d.id);}catch(e){} } current.cena=[current.cena[0]]; this.textContent='Dos platos'; } else { current.cena.push({id:null,rid:null,texto:''}); this.textContent='Plato único'; } renderDishes(); });
+$('#addEvent').addEventListener('click',()=>toast('La edición de eventos llega en el siguiente paso.'));
+$('#save').addEventListener('click',closeEditor);
+
+['#rfName','#rfTime','#rfDesc','#rfLink'].forEach(sel=>$(sel).addEventListener('input',commitMeta));
+document.querySelectorAll('#rfSeason button').forEach(b=>b.addEventListener('click',()=>{setSeg('#rfSeason',b.dataset.v);commitMeta();}));
+document.querySelectorAll('#rfDiff button').forEach(b=>b.addEventListener('click',()=>{const on=b.classList.contains('on');setSeg('#rfDiff',on?null:b.dataset.v);commitMeta();}));
+$('#rfAddIng').addEventListener('click',()=>$('#rfIng').appendChild(ingRow('','','ud')));
+$('#rfClose').addEventListener('click',closeRecipeForm);
+$('#rfDone').addEventListener('click',closeRecipeForm);
+$('#rEdit').addEventListener('click',()=>{$('#recipeModal').hidden=true; openRecipeForm(openRid);});
+
+$('#prevWeek').addEventListener('click',()=>goWeek(-1));
+$('#nextWeek').addEventListener('click',()=>goWeek(1));
+$('#weekLabel').addEventListener('click',()=>{ if(weekOffset!==0){ const d=weekOffset<0?1:-1; weekOffset=0; renderWeek(d); } });
+(function(){
+  const wk=$('#week'); let x0=null,y0=null,swiped=false;
+  wk.addEventListener('pointerdown',e=>{ x0=e.clientX; y0=e.clientY; swiped=false; });
+  wk.addEventListener('pointerup',e=>{ if(x0==null)return; const dx=e.clientX-x0,dy=e.clientY-y0; x0=null; if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.4){ swiped=true; goWeek(dx<0?1:-1); } });
+  wk.addEventListener('click',e=>{ if(swiped){ e.stopPropagation(); e.preventDefault(); swiped=false; } },true);
+})();
+
+// ================= Arranque =================
+await loadRecipes();
+await renderWeek();
+</script>
+</body>
+</html>
