@@ -90,9 +90,16 @@ export const recipes = {
       .from('recipes').select('*, recipe_ingredients(*)').eq('id', recipeId).single();
     if (error) throw error; return data;
   },
-  // Crea o actualiza una receta (autoguardado desde el formulario)
+  // Crea o actualiza una receta (autoguardado desde el formulario).
+  // Con id -> UPDATE por id (no toca family_id, así la RLS lo permite).
+  // Sin id -> INSERT (debe incluir family_id).
   async upsert(recipe) {
-    const { data, error } = await supabase.from('recipes').upsert(recipe).select().single();
+    if (recipe.id) {
+      const { id, family_id, ...patch } = recipe; // family_id NO se modifica al editar
+      const { data, error } = await supabase.from('recipes').update(patch).eq('id', id).select().single();
+      if (error) throw error; return data;
+    }
+    const { data, error } = await supabase.from('recipes').insert(recipe).select().single();
     if (error) throw error; return data;
   },
   async incrementUse(recipeId) {
