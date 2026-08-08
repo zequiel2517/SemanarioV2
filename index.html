@@ -117,7 +117,8 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .btn-book{background:#e6f6f3; color:#1f7a6e} .btn-book:hover{background:#d3efe9} .btn-book[hidden]{display:none}
 .btn-x{background:#f2f2f4; color:#9a9aa2} .btn-x:hover{background:#eaeaee; color:#e0563c}
 .linked-tags{display:flex; gap:6px; margin:5px 0 0 24px; flex-wrap:wrap}
-.pill{font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px}
+.pill{font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px; white-space:nowrap}
+#rSeason{flex:none}
 .pill.season{color:#fff}
 .pill.verano{background:var(--verano)} .pill.invierno{background:var(--invierno)} .pill.anual{background:var(--anual)}
 .pill.time{background:#f0eef7; color:#6a5aa8} .pill.diff{background:#f3f0ea; color:#8a6d2a}
@@ -206,12 +207,6 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 </head>
 <body>
 <div class="wrap">
-
-<p class="caption">
-  <b>Mockup V2 · vista semana</b> — cada día es tu tarjeta pequeña (Comida/Cena a la izquierda, Eventos a la derecha).<br>
-  <b>Toca una tarjeta</b> para abrir el editor y modificarla. El <b>🛒</b> de cada cabecera incluye ese día en la compra;
-  la <b>Lista</b> global está arriba.
-</p>
 
 <div class="topbar">
   <div class="brand"><h1>Semanario Familiar</h1><span class="wk" id="weekLabel" title="Volver a la semana actual">Semana del 2 – 8 ago</span></div>
@@ -413,8 +408,8 @@ function mealChip(cls,icon,dishes){
   const named=dishes.filter(x=>x.texto);
   if(!named.length) return `<div class="mchip ${cls}"><span class="ic">${icon}</span><span class="empty">Sin plato — toca para añadir</span></div>`;
   const text=named.map(x=>x.texto).join(' · ');
-  const book=named.find(x=>x.rid);
-  return `<div class="mchip ${cls}"><span class="ic">${icon}</span>${mq(text)}${book?`<button class="book" data-rid="${book.rid}" title="Ver receta">📖</button>`:''}</div>`;
+  const books=named.filter(x=>x.rid).map(x=>`<button class="book" data-rid="${x.rid}" title="Ver receta: ${esc(x.texto)}">📖</button>`).join('');
+  return `<div class="mchip ${cls}"><span class="ic">${icon}</span>${mq(text)}${books}</div>`;
 }
 function updateCount(days){ $('#shopCount').textContent=days.filter(d=>d.cart).length; }
 
@@ -575,17 +570,26 @@ async function closeRecipeForm(){
 }
 
 // ================= Lista de la compra (global) =================
+let shopState=null;
 async function openShop(){
   try{
     const res=await shoppingApi.generate(family.id, mondayForOffset(weekOffset));
-    $('#shopSub').textContent=`${res.days.length} días · ${res.buy.length} productos`;
-    $('#shopDays').innerHTML=res.days.length?res.days.map(dISO=>{const d=new Date(dISO+'T00:00:00');return `<span class="chip">${DOW[(d.getDay()+6)%7]} · ${d.getDate()} ${MES[d.getMonth()]}</span>`;}).join(''):'<span style="color:#b6b6bf;font-size:13px">Ningún día marcado con 🛒</span>';
-    $('#shopBuy').innerHTML=res.buy.length?res.buy.map(x=>`<label class="shop-item"><input type="checkbox"><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada que comprar. Marca días con 🛒 y añade recetas con ingredientes.</p>';
-    $('#shopPantry').innerHTML=res.pantry.map(x=>`<label class="shop-item"><input type="checkbox" checked disabled><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join('');
-    $('#waBtn').href=shoppingApi.whatsappUrl(res);
-    $('#shopBuy').querySelectorAll('input').forEach(cb=>cb.addEventListener('change',()=>cb.closest('.shop-item').classList.toggle('have',cb.checked)));
+    shopState={ days:res.days, buy:res.buy.slice(), pantry:res.pantry.slice() };
+    renderShop();
     $('#shopModal').hidden=false;
   }catch(e){ toast('No pude generar la compra: '+e.message); }
+}
+function renderShop(){
+  const s=shopState;
+  $('#shopSub').textContent=`${s.days.length} días · ${s.buy.length} productos`;
+  $('#shopDays').innerHTML=s.days.length?s.days.map(dISO=>{const d=new Date(dISO+'T00:00:00');return `<span class="chip">${DOW[(d.getDay()+6)%7]} · ${d.getDate()} ${MES[d.getMonth()]}</span>`;}).join(''):'<span style="color:#b6b6bf;font-size:13px">Ningún día marcado con 🛒</span>';
+  $('#shopBuy').innerHTML=s.buy.length?s.buy.map(x=>`<label class="shop-item"><input type="checkbox"><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada que comprar. Marca días con 🛒 y añade recetas con ingredientes.</p>';
+  $('#shopPantry').innerHTML=s.pantry.length?s.pantry.map((x,i)=>`<label class="shop-item"><input type="checkbox" data-i="${i}" checked><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada en la despensa.</p>';
+  $('#waBtn').href=shoppingApi.whatsappUrl({days:s.days, buy:s.buy});
+  $('#shopBuy').querySelectorAll('input').forEach(cb=>cb.addEventListener('change',()=>cb.closest('.shop-item').classList.toggle('have',cb.checked)));
+  $('#shopPantry').querySelectorAll('input').forEach(cb=>cb.addEventListener('change',()=>{
+    if(!cb.checked){ const i=+cb.dataset.i; const item=s.pantry.splice(i,1)[0]; if(item){ s.buy.push(item); renderShop(); } }
+  }));
 }
 
 // ================= Navegación entre semanas =================
