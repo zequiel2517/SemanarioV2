@@ -222,35 +222,46 @@ export const events = {
 // ============================================================
 export const shopping = {
   async generate(familyId, anyDateInWeek = new Date()) {
-    const monday = mondayOf(anyDateInWeek), from = iso(monday), to = iso(addDays(monday, 6));
+    const monday = mondayOf(anyDateInWeek), from = iso(monday), to = iso(addDays(monday, 6)), weekStart = from;
 
-    const [{ data: plans }, { data: pantry }, { data: basics }] = await Promise.all([
+    const [{ data: plans }, { data: pantry }, { data: basics }, { data: manual }] = await Promise.all([
       supabase.from('plan_days').select('day').eq('family_id', familyId).eq('include_in_shopping', true).gte('day', from).lte('day', to),
       supabase.from('pantry_items').select('name').eq('family_id', familyId),
       supabase.from('ingredients').select('name').eq('is_basic', true),
+      supabase.from('shopping_items').select('*').eq('family_id', familyId).eq('week_start', weekStart),
     ]);
     const days = (plans || []).map(p => p.day);
-    if (!days.length) return { days: [], buy: [], pantry: [] };
-
-    const { data: dishes, error } = await supabase
-      .from('dishes')
-      .select('day, recipe_id, recipes(recipe_ingredients(name, quantity, unit, ingredient_id))')
-      .eq('family_id', familyId).in('day', days).not('recipe_id', 'is', null);
-    if (error) throw error;
-
     const basicSet = new Set([...(pantry || []), ...(basics || [])].map(x => x.name.trim().toLowerCase()));
+
     const map = new Map();
-    for (const d of (dishes || [])) {
-      for (const ing of (d.recipes?.recipe_ingredients || [])) {
-        const key = (ing.ingredient_id || ing.name.trim().toLowerCase()) + '|' + (ing.unit || '');
-        const cur = map.get(key) || { name: ing.name, unit: ing.unit || '', quantity: 0, basic: basicSet.has(ing.name.trim().toLowerCase()) };
-        cur.quantity += Number(ing.quantity) || 0;
-        map.set(key, cur);
+    if (days.length) {
+      const { data: dishes, error } = await supabase
+        .from('dishes')
+        .select('day, recipe_id, recipes(recipe_ingredients(name, quantity, unit, ingredient_id))')
+        .eq('family_id', familyId).in('day', days).not('recipe_id', 'is', null);
+      if (error) throw error;
+      for (const d of (dishes || [])) {
+        for (const ing of (d.recipes?.recipe_ingredients || [])) {
+          const key = (ing.ingredient_id || ing.name.trim().toLowerCase()) + '|' + (ing.unit || '');
+          const cur = map.get(key) || { name: ing.name, unit: ing.unit || '', quantity: 0, basic: basicSet.has(ing.name.trim().toLowerCase()) };
+          cur.quantity += Number(ing.quantity) || 0;
+          map.set(key, cur);
+        }
       }
     }
     const all = [...map.values()];
-    return { days, buy: all.filter(x => !x.basic), pantry: all.filter(x => x.basic) };
+    const manualItems = (manual || []).map(m => ({ id: m.id, name: m.name, quantity: m.quantity, unit: m.unit, manual: true }));
+    return { days, weekStart, buy: [...all.filter(x => !x.basic), ...manualItems], pantry: all.filter(x => x.basic) };
   },
+
+  // Productos añadidos a mano (limpieza, pan, servilletas…). Persisten por semana.
+  async addManual(familyId, weekStart, name, quantity, unit) {
+    const { data, error } = await supabase.from('shopping_items')
+      .insert({ family_id: familyId, week_start: weekStart, name, quantity: (quantity ?? null), unit: (unit || null), source: 'manual' })
+      .select().single();
+    if (error) throw error; return data;
+  },
+  removeManual(id) { return supabase.from('shopping_items').delete().eq('id', id); },
 
   // Genera el texto para el enlace de WhatsApp (wa.me)
   whatsappUrl({ days, buy }) {

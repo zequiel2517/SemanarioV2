@@ -163,6 +163,15 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .chip{font-size:11px; font-weight:800; background:#e7f7ec; color:#1f7a4a; padding:5px 10px; border-radius:999px}
 .shop-group h4{margin:6px 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted)}
 .shop-item{display:flex; align-items:center; gap:11px; padding:9px 4px; border-bottom:1px solid var(--line)}
+.shop-add{display:flex; gap:6px; margin:10px 0 4px}
+.shop-add input,.shop-add select{border:1.5px solid var(--line); border-radius:9px; padding:9px; font-family:inherit; font-size:13px; background:#fafafb; outline:none; min-width:0}
+.shop-add #addName{flex:1}
+.shop-add #addQty{width:60px}
+.shop-add #addUnit{width:88px}
+.shop-add #addBtn{border:none; background:var(--orange); color:#fff; font-weight:800; width:40px; border-radius:9px; cursor:pointer; font-size:18px; flex:none}
+.shop-add #addBtn:hover{background:var(--orange-dark)}
+.rm-item{border:none; background:#f2f2f4; color:#c0392b; width:24px; height:24px; border-radius:6px; cursor:pointer; font-size:15px; flex:none}
+.rm-item:hover{background:#f8d7d2}
 .shop-item input{width:19px; height:19px; accent-color:var(--orange); flex:none}
 .shop-item .nm{font-size:14px; flex:1}
 .shop-item .q{font-size:12.5px; color:var(--muted); font-weight:700}
@@ -312,6 +321,12 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
       <div class="shop-note">Junta los ingredientes de <b>todos los días marcados con 🛒</b>, sumando lo que se repite. Los básicos de la <b>despensa</b> quedan tachados aparte.</div>
       <div class="shop-days" id="shopDays"></div>
       <div class="shop-group"><h4>Para comprar</h4><div id="shopBuy"></div></div>
+      <div class="shop-add">
+        <input id="addName" placeholder="Añadir producto (pan, servilletas…)" autocomplete="off">
+        <input id="addQty" type="number" min="0" step="any" placeholder="Cant.">
+        <select id="addUnit"></select>
+        <button id="addBtn" title="Añadir a la lista">＋</button>
+      </div>
       <div class="shop-group pantry"><h4>Ya en tu despensa</h4><div id="shopPantry"></div></div>
       <a class="wa" id="waBtn" href="#" target="_blank" rel="noopener">Enviar por WhatsApp</a>
     </div>
@@ -335,7 +350,7 @@ const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','di
 const MESL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DOW=['L','M','X','J','V','S','D'];
 const DOWNAME=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-const UNITS=['ud','g','kg','ml','l','cucharadita','cucharada','chorrito','vaso','diente','pizca','puñado','manojo','loncha','lomos','bote','lata','hoja'];
+const UNITS=['ud','g','kg','ml','l','cucharadita','cucharada','chorrito','vaso','diente','pizca','puñado','manojo','loncha','lomos','bote','brick','bolsa','paquete','lata','hoja'];
 const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
 const seasonClass=t=>t==='verano'?'verano':t==='invierno'?'invierno':'anual';
 const seasonLabel=t=>t==='verano'?'☀ Verano':t==='invierno'?'❄ Invierno':'Todo el año';
@@ -574,7 +589,7 @@ let shopState=null;
 async function openShop(){
   try{
     const res=await shoppingApi.generate(family.id, mondayForOffset(weekOffset));
-    shopState={ days:res.days, buy:res.buy.slice(), pantry:res.pantry.slice() };
+    shopState={ days:res.days, weekStart:res.weekStart, buy:res.buy.slice(), pantry:res.pantry.slice() };
     renderShop();
     $('#shopModal').hidden=false;
   }catch(e){ toast('No pude generar la compra: '+e.message); }
@@ -583,13 +598,29 @@ function renderShop(){
   const s=shopState;
   $('#shopSub').textContent=`${s.days.length} días · ${s.buy.length} productos`;
   $('#shopDays').innerHTML=s.days.length?s.days.map(dISO=>{const d=new Date(dISO+'T00:00:00');return `<span class="chip">${DOW[(d.getDay()+6)%7]} · ${d.getDate()} ${MES[d.getMonth()]}</span>`;}).join(''):'<span style="color:#b6b6bf;font-size:13px">Ningún día marcado con 🛒</span>';
-  $('#shopBuy').innerHTML=s.buy.length?s.buy.map(x=>`<label class="shop-item"><input type="checkbox"><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada que comprar. Marca días con 🛒 y añade recetas con ingredientes.</p>';
+  $('#shopBuy').innerHTML=s.buy.length?s.buy.map((x,i)=>`<label class="shop-item"><input type="checkbox"><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span>${x.manual?`<button class="rm-item" data-id="${x.id}" title="Quitar">×</button>`:''}</label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada que comprar. Marca días con 🛒, añade recetas con ingredientes, o mete productos con ＋.</p>';
   $('#shopPantry').innerHTML=s.pantry.length?s.pantry.map((x,i)=>`<label class="shop-item"><input type="checkbox" data-i="${i}" checked><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada en la despensa.</p>';
   $('#waBtn').href=shoppingApi.whatsappUrl({days:s.days, buy:s.buy});
-  $('#shopBuy').querySelectorAll('input').forEach(cb=>cb.addEventListener('change',()=>cb.closest('.shop-item').classList.toggle('have',cb.checked)));
+  $('#shopBuy').querySelectorAll('input[type=checkbox]').forEach(cb=>cb.addEventListener('change',()=>cb.closest('.shop-item').classList.toggle('have',cb.checked)));
+  $('#shopBuy').querySelectorAll('.rm-item').forEach(b=>b.addEventListener('click',async e=>{
+    e.preventDefault(); e.stopPropagation();
+    try{ await shoppingApi.removeManual(b.dataset.id); s.buy=s.buy.filter(x=>x.id!==b.dataset.id); renderShop(); }
+    catch(err){ toast(err.message); }
+  }));
   $('#shopPantry').querySelectorAll('input').forEach(cb=>cb.addEventListener('change',()=>{
     if(!cb.checked){ const i=+cb.dataset.i; const item=s.pantry.splice(i,1)[0]; if(item){ s.buy.push(item); renderShop(); } }
   }));
+}
+async function addManualItem(){
+  if(!shopState) return;
+  const name=$('#addName').value.trim(); if(!name){ $('#addName').focus(); return; }
+  const q=parseFloat($('#addQty').value); const unit=$('#addUnit').value;
+  try{
+    const row=await shoppingApi.addManual(family.id, shopState.weekStart, name, isNaN(q)?null:q, unit);
+    shopState.buy.push({id:row.id, name, quantity:isNaN(q)?null:q, unit, manual:true});
+    $('#addName').value=''; $('#addQty').value=''; $('#addName').focus();
+    renderShop();
+  }catch(e){ toast('No pude añadir: '+e.message); }
 }
 
 // ================= Navegación entre semanas =================
@@ -601,6 +632,10 @@ document.querySelectorAll('.backdrop.center').forEach(b=>b.addEventListener('cli
 $('#editorModal').addEventListener('click',e=>{if(e.target===$('#editorModal'))closeEditor();});
 $('#closeEditor').addEventListener('click',closeEditor);
 $('#openShop').addEventListener('click',openShop);
+// Fila de "añadir producto" a la compra
+$('#addUnit').innerHTML='<option value=""></option>'+UNITS.map(u=>`<option>${u}</option>`).join('');
+$('#addBtn').addEventListener('click',addManualItem);
+$('#addName').addEventListener('keydown',e=>{ if(e.key==='Enter') addManualItem(); });
 $('#cartSwitch').addEventListener('click',async()=>{ current.cart=!current.cart; syncCartSwitch(); try{ await weekApi.setDayShopping(family.id,current.date,current.cart);}catch(e){toast(e.message);} });
 $('#addComida').addEventListener('click',()=>{if(current.comida.length<4){current.comida.push({id:null,rid:null,texto:''});renderDishes();}});
 $('#addCena').addEventListener('click',()=>{if(current.cena.length<4){current.cena.push({id:null,rid:null,texto:''});renderDishes();}});
