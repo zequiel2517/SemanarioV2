@@ -131,7 +131,7 @@ export const week = {
     const from = iso(monday), to = iso(sunday);
 
     const [dishesR, eventsR, plansR, recurR] = await Promise.all([
-      supabase.from('dishes').select('id, day, slot, position, recipe_id, free_text, recipes(title)').eq('family_id', familyId).gte('day', from).lte('day', to),
+      supabase.from('dishes').select('id, day, slot, position, recipe_id, free_text, recipes!recipe_id(title)').eq('family_id', familyId).gte('day', from).lte('day', to),
       supabase.from('events').select('*').eq('family_id', familyId).gte('day', from).lte('day', to),
       supabase.from('plan_days').select('day, include_in_shopping').eq('family_id', familyId).gte('day', from).lte('day', to),
       supabase.from('recurring_events').select('*').eq('family_id', familyId).eq('active', true),
@@ -237,7 +237,7 @@ export const shopping = {
     if (days.length) {
       const { data: dishes, error } = await supabase
         .from('dishes')
-        .select('day, recipe_id, recipes(recipe_ingredients(name, quantity, unit, ingredient_id))')
+        .select('day, recipe_id, recipes!recipe_id(recipe_ingredients(name, quantity, unit, ingredient_id))')
         .eq('family_id', familyId).in('day', days).not('recipe_id', 'is', null);
       if (error) throw error;
       for (const d of (dishes || [])) {
