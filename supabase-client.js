@@ -131,7 +131,7 @@ export const week = {
     const from = iso(monday), to = iso(sunday);
 
     const [dishesR, eventsR, plansR, recurR] = await Promise.all([
-      supabase.from('dishes').select('id, day, slot, position, recipe_id, free_text, recipes!recipe_id(title)').eq('family_id', familyId).gte('day', from).lte('day', to),
+      supabase.from('dishes').select('id, day, slot, position, recipe_id, free_text, side_recipe_id, side_text, recipes!recipe_id(title)').eq('family_id', familyId).gte('day', from).lte('day', to),
       supabase.from('events').select('*').eq('family_id', familyId).gte('day', from).lte('day', to),
       supabase.from('plan_days').select('day, include_in_shopping').eq('family_id', familyId).gte('day', from).lte('day', to),
       supabase.from('recurring_events').select('*').eq('family_id', familyId).eq('active', true),
@@ -156,7 +156,7 @@ export const week = {
       const dishesOf = (slot) => (dishesR.data || [])
         .filter(x => x.day === dISO && x.slot === slot)
         .sort((a, b) => a.position - b.position)
-        .map(x => ({ id: x.id, recipe_id: x.recipe_id, free_text: x.free_text, title: x.recipes?.title || x.free_text || '' }));
+        .map(x => ({ id: x.id, recipe_id: x.recipe_id, free_text: x.free_text, title: x.recipes?.title || x.free_text || '', side_recipe_id: x.side_recipe_id, side_text: x.side_text }));
 
       const puntuales = (eventsR.data || []).filter(e => e.day === dISO)
         .map(e => ({ id: e.id, at_time: e.at_time, title: e.title, color: e.color, recurring: false }));
@@ -237,15 +237,32 @@ export const shopping = {
     if (days.length) {
       const { data: dishes, error } = await supabase
         .from('dishes')
-        .select('day, recipe_id, recipes!recipe_id(recipe_ingredients(name, quantity, unit, ingredient_id))')
-        .eq('family_id', familyId).in('day', days).not('recipe_id', 'is', null);
+        .select('recipe_id, side_recipe_id')
+        .eq('family_id', familyId).in('day', days);
       if (error) throw error;
-      for (const d of (dishes || [])) {
-        for (const ing of (d.recipes?.recipe_ingredients || [])) {
-          const key = (ing.ingredient_id || ing.name.trim().toLowerCase()) + '|' + (ing.unit || '');
-          const cur = map.get(key) || { name: ing.name, unit: ing.unit || '', quantity: 0, basic: basicSet.has(ing.name.trim().toLowerCase()) };
-          cur.quantity += Number(ing.quantity) || 0;
-          map.set(key, cur);
+
+      // Recetas usadas (principal + guarnición), con repetición por plato
+      const used = [];
+      for (const d of (dishes || [])) { if (d.recipe_id) used.push(d.recipe_id); if (d.side_recipe_id) used.push(d.side_recipe_id); }
+
+      if (used.length) {
+        const ids = [...new Set(used)];
+        const { data: ris, error: e2 } = await supabase
+          .from('recipe_ingredients')
+          .select('recipe_id, name, quantity, unit, ingredient_id')
+          .in('recipe_id', ids);
+        if (e2) throw e2;
+
+        const byRecipe = new Map();
+        for (const ri of (ris || [])) { const arr = byRecipe.get(ri.recipe_id) || []; arr.push(ri); byRecipe.set(ri.recipe_id, arr); }
+
+        for (const rid of used) {
+          for (const ing of (byRecipe.get(rid) || [])) {
+            const key = (ing.ingredient_id || ing.name.trim().toLowerCase()) + '|' + (ing.unit || '');
+            const cur = map.get(key) || { name: ing.name, unit: ing.unit || '', quantity: 0, basic: basicSet.has(ing.name.trim().toLowerCase()) };
+            cur.quantity += Number(ing.quantity) || 0;
+            map.set(key, cur);
+          }
         }
       }
     }

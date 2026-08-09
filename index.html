@@ -117,6 +117,17 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .btn-book{background:#e6f6f3; color:#1f7a6e} .btn-book:hover{background:#d3efe9} .btn-book[hidden]{display:none}
 .btn-x{background:#f2f2f4; color:#9a9aa2} .btn-x:hover{background:#eaeaee; color:#e0563c}
 .linked-tags{display:flex; gap:6px; margin:5px 0 0 24px; flex-wrap:wrap}
+.garnish{margin:6px 0 0 24px; position:relative}
+.garnish-add{border:1.5px dashed #d9c2ef; background:#f7f0ff; color:#7a4fb0; font-family:inherit; font-weight:800; font-size:12px; padding:6px 10px; border-radius:9px; cursor:pointer}
+.garnish-add:hover{background:#efe4ff}
+.garnish-chip{display:inline-block; background:#f1e9fb; color:#6a3fa0; font-weight:700; font-size:12px; padding:6px 10px; border-radius:9px; cursor:pointer}
+.garnish-rm{border:none; background:#f2f2f4; color:#9a9aa2; width:24px; height:24px; border-radius:7px; cursor:pointer; font-size:14px; margin-left:6px; vertical-align:middle}
+.garnish-rm:hover{background:#eaeaee; color:#e0563c}
+.garnish.adding .ginput{width:100%; border:1.5px solid var(--orange); border-radius:10px; padding:9px 11px; font-family:inherit; font-size:13.5px; outline:none; box-shadow:0 0 0 3px #ffdcca}
+.garnish .gdrop{position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:40; background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:0 12px 30px rgba(20,15,10,.16); overflow:hidden; padding:5px}
+.garnish .gdrop[hidden]{display:none}
+.rf-side{display:flex; align-items:center; gap:9px; font-size:13.5px; font-weight:700; color:var(--ink); background:#faf6ff; border:1.5px solid #ecdffb; border-radius:11px; padding:11px 12px; margin-bottom:12px; cursor:pointer}
+.rf-side input{width:18px; height:18px; accent-color:#7a4fb0}
 .pill{font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px; white-space:nowrap}
 #rSeason{flex:none}
 .pill.season{color:#fff}
@@ -292,6 +303,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
           </div>
         </div>
       </div>
+      <label class="rf-side"><input type="checkbox" id="rfSide"> 🥗 Es una guarnición (patatas, arroz, ensalada…)</label>
       <div class="field"><label>Preparación</label><textarea id="rfDesc" rows="4" placeholder="Cómo se hace…"></textarea></div>
       <div class="field">
         <label>Ingredientes <span class="lbl-hint">— alimentan la lista de la compra</span></label>
@@ -366,7 +378,7 @@ $('#logoutBtn').onclick=async()=>{ await auth.signOut(); localStorage.removeItem
 
 // ================= Recetas (cache mapeada a la UI) =================
 let RECIPES=[];
-const mapRecipe=r=>({id:r.id,nombre:r.title,temporada:r.season||'todo el año',tiempo:r.prep_minutes,dificultad:r.difficulty,desc:r.description||'',enlace:r.video_url||'',fav:!!r.is_favorite,usos:r.uses||0,ing:(r.recipe_ingredients||[]).map(x=>[x.name,x.quantity,x.unit])});
+const mapRecipe=r=>({id:r.id,nombre:r.title,temporada:r.season||'todo el año',tiempo:r.prep_minutes,dificultad:r.difficulty,desc:r.description||'',enlace:r.video_url||'',fav:!!r.is_favorite,usos:r.uses||0,is_side:!!r.is_side,ing:(r.recipe_ingredients||[]).map(x=>[x.name,x.quantity,x.unit])});
 const byId=id=>RECIPES.find(r=>r.id===id);
 async function loadRecipes(){ try{ RECIPES=(await recipesApi.list(family.id)).map(mapRecipe); }catch(e){ toast('No pude cargar recetas: '+e.message); } }
 
@@ -379,8 +391,8 @@ function toUiDay(d,i){
   return {date:d.date,l:DOW[i],fecha:date.getDate()+' '+MES[date.getMonth()],
     nombre:DOWNAME[i]+' '+date.getDate()+' '+MESL[date.getMonth()],
     cart:!!d.include_in_shopping,
-    comida:d.comida.map(x=>({id:x.id,rid:x.recipe_id,texto:x.title||x.free_text||''})),
-    cena:d.cena.map(x=>({id:x.id,rid:x.recipe_id,texto:x.title||x.free_text||''})),
+    comida:d.comida.map(x=>({id:x.id,rid:x.recipe_id,texto:x.title||x.free_text||'',side_rid:x.side_recipe_id,side_text:x.side_text})),
+    cena:d.cena.map(x=>({id:x.id,rid:x.recipe_id,texto:x.title||x.free_text||'',side_rid:x.side_recipe_id,side_text:x.side_text})),
     eventos:d.eventos.map(e=>({id:e.id,recurring_id:e.recurring_id,hora:(e.at_time||'').slice(0,5),titulo:e.title,color:e.color||'#8a8a94',recurring:!!e.recurring}))};
 }
 async function getWeek(off){
@@ -419,12 +431,16 @@ async function renderWeek(dir){
   $('#weekLabel').textContent='Semana del '+rangeLabel(mon,addDays(mon,6));
   if(dir){ wk.classList.remove('in-next','in-prev'); void wk.offsetWidth; wk.classList.add(dir>0?'in-next':'in-prev'); }
 }
+function sideName(dish){ return dish.side_rid ? (byId(dish.side_rid)?.nombre||'guarnición') : (dish.side_text||''); }
+function dishDisplay(dish){ const s=sideName(dish); return dish.texto + (s?` con ${s}`:''); }
 function mealChip(cls,icon,dishes){
   const named=dishes.filter(x=>x.texto);
   if(!named.length) return `<div class="mchip ${cls}"><span class="ic">${icon}</span><span class="empty">Sin plato — toca para añadir</span></div>`;
-  const text=named.map(x=>x.texto).join(' · ');
-  const books=named.filter(x=>x.rid).map(x=>`<button class="book" data-rid="${x.rid}" title="Ver receta: ${esc(x.texto)}">📖</button>`).join('');
-  return `<div class="mchip ${cls}"><span class="ic">${icon}</span>${mq(text)}${books}</div>`;
+  const text=named.map(dishDisplay).join(' · ');
+  const books=[];
+  named.forEach(x=>{ if(x.rid) books.push([x.rid,x.texto]); if(x.side_rid) books.push([x.side_rid,sideName(x)]); });
+  const booksHtml=books.map(([rid,nm])=>`<button class="book" data-rid="${rid}" title="Ver receta: ${esc(nm)}">📖</button>`).join('');
+  return `<div class="mchip ${cls}"><span class="ic">${icon}</span>${mq(text)}${booksHtml}</div>`;
 }
 function updateCount(days){ $('#shopCount').textContent=days.filter(d=>d.cart).length; }
 
@@ -443,6 +459,25 @@ function closeEditor(){ $('#editorModal').hidden=true; renderWeek(); }
 function syncCartSwitch(){ const s=$('#cartSwitch'); s.classList.toggle('on',current.cart); s.setAttribute('aria-checked',current.cart); }
 
 function renderDishes(){ renderDishList('comida',$('#comidaList')); renderDishList('cena',$('#cenaList')); }
+function openGarnishDrop(key,i,input,drop){
+  const q=norm(input.value);
+  let list=RECIPES.filter(r=>r.is_side);
+  if(q) list=list.filter(r=>norm(r.nombre).includes(q));
+  list=list.sort((a,b)=>b.usos-a.usos).slice(0,8);
+  let html=`<div class="drop-lbl">Guarniciones</div>`;
+  if(!list.length) html+=`<div style="padding:8px 10px;color:#b6b6bf;font-size:12.5px">No hay guarniciones. Marca una receta como “Es guarnición” (con el 📖 → Editar) para que aparezca aquí.</div>`;
+  list.forEach(r=>{ html+=`<button class="opt" data-rid="${r.id}"><span class="star"></span><span class="nm">${esc(r.nombre)}</span></button>`; });
+  drop.innerHTML=html; drop.hidden=false;
+  drop.querySelectorAll('.opt').forEach(b=>b.addEventListener('mousedown',e=>{e.preventDefault(); setSide(key,i,b.dataset.rid); drop.hidden=true;}));
+}
+async function setSide(key,i,rid){
+  const dish=current[key][i];
+  try{
+    await weekApi.updateDish(dish.id,{side_recipe_id:rid, side_text:null});
+    dish.side_rid=rid; dish.side_text=null; dish._addingSide=false;
+    renderDishes(); flashSaved();
+  }catch(e){ toast('No se pudo guardar la guarnición: '+e.message); }
+}
 function renderDishList(key,container){
   container.innerHTML='';
   current[key].forEach((dish,i)=>{
@@ -464,6 +499,30 @@ function renderDishList(key,container){
     input.addEventListener('blur',()=>setTimeout(()=>drop.hidden=true,150));
     if(book)book.addEventListener('click',()=>{if(dish.rid)openRecipe(dish.rid);});
     if(del)del.addEventListener('click',()=>removeDish(key,i));
+    // --- Guarnición ---
+    if(dish.texto && dish.id){
+      const g=document.createElement('div');
+      if(dish.side_rid || dish.side_text){
+        g.className='garnish';
+        const sname=dish.side_rid?(byId(dish.side_rid)?.nombre||'guarnición'):dish.side_text;
+        g.innerHTML=`<span class="garnish-chip" title="Ver guarnición">🥗 con ${esc(sname)}</span><button class="garnish-rm" title="Quitar guarnición">×</button>`;
+        if(dish.side_rid) g.querySelector('.garnish-chip').addEventListener('click',()=>openRecipe(dish.side_rid));
+        g.querySelector('.garnish-rm').addEventListener('click',()=>setSide(key,i,null));
+      } else if(dish._addingSide){
+        g.className='garnish adding';
+        g.innerHTML=`<input class="ginput" type="text" placeholder="Buscar guarnición…" autocomplete="off" spellcheck="false"><div class="gdrop" hidden></div>`;
+        const gi=g.querySelector('.ginput'), gd=g.querySelector('.gdrop');
+        gi.addEventListener('focus',()=>openGarnishDrop(key,i,gi,gd));
+        gi.addEventListener('input',()=>openGarnishDrop(key,i,gi,gd));
+        gi.addEventListener('blur',()=>setTimeout(()=>{gd.hidden=true; dish._addingSide=false;},150));
+        setTimeout(()=>gi.focus(),0);
+      } else {
+        g.className='garnish';
+        g.innerHTML=`<button class="garnish-add">＋ guarnición</button>`;
+        g.querySelector('.garnish-add').addEventListener('click',()=>{ dish._addingSide=true; renderDishes(); });
+      }
+      wrap.appendChild(g);
+    }
     container.appendChild(wrap);
   });
 }
@@ -560,12 +619,13 @@ async function openRecipeForm(recipeId){
   $('#rfTitle').textContent='Editar receta';
   $('#rfName').value=r.nombre||''; $('#rfTime').value=r.tiempo??''; $('#rfDesc').value=r.desc||''; $('#rfLink').value=r.enlace||'';
   setSeg('#rfSeason', r.temporada||'todo el año'); setSeg('#rfDiff', r.dificultad||'');
+  $('#rfSide').checked = !!r.is_side;
   renderIngRows(r.ing);
   $('#recipeFormModal').hidden=false;
 }
 async function commitMeta(){
   if(!formRid) return;
-  const patch={id:formRid, title:($('#rfName').value.trim()||'Sin nombre'), prep_minutes:$('#rfTime').value?parseInt($('#rfTime').value,10):null, season:segVal('#rfSeason')||'todo el año', difficulty:segVal('#rfDiff'), description:$('#rfDesc').value, video_url:$('#rfLink').value.trim()};
+  const patch={id:formRid, title:($('#rfName').value.trim()||'Sin nombre'), prep_minutes:$('#rfTime').value?parseInt($('#rfTime').value,10):null, season:segVal('#rfSeason')||'todo el año', difficulty:segVal('#rfDiff'), description:$('#rfDesc').value, video_url:$('#rfLink').value.trim(), is_side:$('#rfSide').checked};
   try{ await recipesApi.upsert(patch); flashSaved(); }catch(e){ toast(e.message); }
 }
 async function commitIng(){
@@ -645,6 +705,7 @@ $('#addEvent').addEventListener('click',()=>toast('La edición de eventos llega 
 $('#save').addEventListener('click',closeEditor);
 
 ['#rfName','#rfTime','#rfDesc','#rfLink'].forEach(sel=>$(sel).addEventListener('input',commitMeta));
+$('#rfSide').addEventListener('change',commitMeta);
 document.querySelectorAll('#rfSeason button').forEach(b=>b.addEventListener('click',()=>{setSeg('#rfSeason',b.dataset.v);commitMeta();}));
 document.querySelectorAll('#rfDiff button').forEach(b=>b.addEventListener('click',()=>{const on=b.classList.contains('on');setSeg('#rfDiff',on?null:b.dataset.v);commitMeta();}));
 $('#rfAddIng').addEventListener('click',()=>$('#rfIng').appendChild(ingRow('','','ud')));
