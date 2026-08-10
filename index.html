@@ -171,6 +171,8 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .yt{display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; background:#ff2f2f; color:#fff; font-weight:800; font-size:13.5px; padding:12px; border-radius:12px}
 .shop-note{font-size:12px; color:var(--muted); background:#fff8f4; border:1px solid #ffe1d1; border-radius:10px; padding:9px 11px; margin-bottom:14px; line-height:1.5}
 .shop-days{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px}
+.reset-btn{border:none; background:rgba(255,255,255,.18); color:#fff; font-family:inherit; font-size:15px; padding:9px 10px; border-radius:11px; cursor:pointer; flex:none}
+.reset-btn:hover{background:rgba(255,255,255,.3)}
 .chip{font-size:11px; font-weight:800; background:#e7f7ec; color:#1f7a4a; padding:5px 10px; border-radius:999px}
 .shop-group h4{margin:6px 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted)}
 .shop-item{display:flex; align-items:center; gap:11px; padding:9px 4px; border-bottom:1px solid var(--line)}
@@ -231,7 +233,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 <div class="topbar">
   <div class="brand"><h1>Semanario Familiar</h1><span class="wk" id="weekLabel" title="Volver a la semana actual">Semana del 2 – 8 ago</span></div>
   <div class="nav"><button id="prevWeek" title="Semana anterior">‹</button><button id="nextWeek" title="Semana siguiente">›</button></div>
-  <span class="fam-name" id="famName"></span><button class="logout-btn" id="logoutBtn" title="Cerrar sesión">Salir</button><button class="compra-btn" id="openShop">🛒 <span class="count" id="shopCount">0</span></button>
+  <span class="fam-name" id="famName"></span><button class="logout-btn" id="logoutBtn" title="Cerrar sesión">Salir</button><button class="compra-btn" id="openShop">🛒 <span class="count" id="shopCount">0</span></button><button class="reset-btn" id="shopReset" title="Vaciar días del carrito (conserva los productos manuales)">🧹</button>
 </div>
 
 <div class="week" id="week"></div>
@@ -330,7 +332,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
   <div class="sheet">
     <div class="sheet-head"><div><h2>🛒 Lista de la compra</h2><div class="sub" id="shopSub"></div></div><button class="x-dark" data-close="shopModal">×</button></div>
     <div class="sheet-body">
-      <div class="shop-note">Junta los ingredientes de <b>todos los días marcados con 🛒</b>, sumando lo que se repite. Los básicos de la <b>despensa</b> quedan tachados aparte.</div>
+      <div class="shop-note">Junta los ingredientes de <b>todos los días marcados con 🛒</b> (de cualquier semana), sumando lo que se repite. Los básicos de la <b>despensa</b> quedan tachados aparte. Lo que <b>taches</b> no se enviará por WhatsApp.</div>
       <div class="shop-days" id="shopDays"></div>
       <div class="shop-group"><h4>Para comprar</h4><div id="shopBuy"></div></div>
       <div class="shop-add">
@@ -421,12 +423,12 @@ async function renderWeek(dir){
       <div class="dc-events">${d.eventos.length?d.eventos.map(e=>`<div class="evrow" style="border-left-color:${e.color}"><div class="t" style="color:${e.color}">${e.hora}${e.recurring?' ♻':''}</div>${mq(e.titulo)}</div>`).join(''):'<div class="none">Sin eventos</div>'}</div>`;
     const cb=card.querySelector('.dc-cart input');
     card.querySelector('.dc-cart').addEventListener('click',e=>e.stopPropagation());
-    cb.addEventListener('change',async()=>{ d.cart=cb.checked; card.classList.toggle('marked',d.cart); updateCount(days); try{ await weekApi.setDayShopping(family.id,d.date,d.cart);}catch(err){toast(err.message);} });
+    cb.addEventListener('change',async()=>{ d.cart=cb.checked; card.classList.toggle('marked',d.cart); markedTotal+=cb.checked?1:-1; setBadge(); try{ await weekApi.setDayShopping(family.id,d.date,d.cart);}catch(err){toast(err.message);} });
     card.querySelectorAll('.book').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openRecipe(b.dataset.rid);}));
     card.addEventListener('click',()=>openEditor(d));
     wk.appendChild(card);
   });
-  updateCount(days);
+  setBadge();
   const mon=mondayForOffset(weekOffset);
   $('#weekLabel').textContent='Semana del '+rangeLabel(mon,addDays(mon,6));
   if(dir){ wk.classList.remove('in-next','in-prev'); void wk.offsetWidth; wk.classList.add(dir>0?'in-next':'in-prev'); }
@@ -442,7 +444,8 @@ function mealChip(cls,icon,dishes){
   const booksHtml=books.map(([rid,nm])=>`<button class="book" data-rid="${rid}" title="Ver receta: ${esc(nm)}">📖</button>`).join('');
   return `<div class="mchip ${cls}"><span class="ic">${icon}</span>${mq(text)}${booksHtml}</div>`;
 }
-function updateCount(days){ $('#shopCount').textContent=days.filter(d=>d.cart).length; }
+let markedTotal=0;
+function setBadge(){ $('#shopCount').textContent=markedTotal; }
 
 // ================= Editor de día =================
 function openEditor(day){
@@ -648,27 +651,28 @@ async function closeRecipeForm(){
 let shopState=null;
 async function openShop(){
   try{
-    const res=await shoppingApi.generate(family.id, mondayForOffset(weekOffset));
-    shopState={ days:res.days, weekStart:res.weekStart, buy:res.buy.slice(), pantry:res.pantry.slice() };
+    const res=await shoppingApi.generate(family.id);
+    shopState={ days:res.days, buy:res.buy.map(x=>({...x, checked:false})), pantry:res.pantry.slice() };
     renderShop();
     $('#shopModal').hidden=false;
   }catch(e){ toast('No pude generar la compra: '+e.message); }
 }
+function updateWa(){ $('#waBtn').href=shoppingApi.whatsappUrl({ buy: shopState.buy.filter(x=>!x.checked) }); }
 function renderShop(){
   const s=shopState;
   $('#shopSub').textContent=`${s.days.length} días · ${s.buy.length} productos`;
   $('#shopDays').innerHTML=s.days.length?s.days.map(dISO=>{const d=new Date(dISO+'T00:00:00');return `<span class="chip">${DOW[(d.getDay()+6)%7]} · ${d.getDate()} ${MES[d.getMonth()]}</span>`;}).join(''):'<span style="color:#b6b6bf;font-size:13px">Ningún día marcado con 🛒</span>';
-  $('#shopBuy').innerHTML=s.buy.length?s.buy.map((x,i)=>`<label class="shop-item"><input type="checkbox"><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span>${x.manual?`<button class="rm-item" data-id="${x.id}" title="Quitar">×</button>`:''}</label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada que comprar. Marca días con 🛒, añade recetas con ingredientes, o mete productos con ＋.</p>';
+  $('#shopBuy').innerHTML=s.buy.length?s.buy.map((x,i)=>`<label class="shop-item${x.checked?' have':''}"><input type="checkbox" data-i="${i}" ${x.checked?'checked':''}><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span>${x.manual?`<button class="rm-item" data-id="${x.id}" title="Quitar">×</button>`:''}</label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada que comprar. Marca días con 🛒, añade recetas con ingredientes, o mete productos con ＋.</p>';
   $('#shopPantry').innerHTML=s.pantry.length?s.pantry.map((x,i)=>`<label class="shop-item"><input type="checkbox" data-i="${i}" checked><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada en la despensa.</p>';
-  $('#waBtn').href=shoppingApi.whatsappUrl({days:s.days, buy:s.buy});
-  $('#shopBuy').querySelectorAll('input[type=checkbox]').forEach(cb=>cb.addEventListener('change',()=>cb.closest('.shop-item').classList.toggle('have',cb.checked)));
+  updateWa();
+  $('#shopBuy').querySelectorAll('input[type=checkbox]').forEach(cb=>cb.addEventListener('change',()=>{ const i=+cb.dataset.i; s.buy[i].checked=cb.checked; cb.closest('.shop-item').classList.toggle('have',cb.checked); updateWa(); }));
   $('#shopBuy').querySelectorAll('.rm-item').forEach(b=>b.addEventListener('click',async e=>{
     e.preventDefault(); e.stopPropagation();
     try{ await shoppingApi.removeManual(b.dataset.id); s.buy=s.buy.filter(x=>x.id!==b.dataset.id); renderShop(); }
     catch(err){ toast(err.message); }
   }));
   $('#shopPantry').querySelectorAll('input').forEach(cb=>cb.addEventListener('change',()=>{
-    if(!cb.checked){ const i=+cb.dataset.i; const item=s.pantry.splice(i,1)[0]; if(item){ s.buy.push(item); renderShop(); } }
+    if(!cb.checked){ const i=+cb.dataset.i; const item=s.pantry.splice(i,1)[0]; if(item){ item.checked=false; s.buy.push(item); renderShop(); } }
   }));
 }
 async function addManualItem(){
@@ -676,11 +680,23 @@ async function addManualItem(){
   const name=$('#addName').value.trim(); if(!name){ $('#addName').focus(); return; }
   const q=parseFloat($('#addQty').value); const unit=$('#addUnit').value;
   try{
-    const row=await shoppingApi.addManual(family.id, shopState.weekStart, name, isNaN(q)?null:q, unit);
-    shopState.buy.push({id:row.id, name, quantity:isNaN(q)?null:q, unit, manual:true});
+    const row=await shoppingApi.addManual(family.id, name, isNaN(q)?null:q, unit);
+    shopState.buy.push({id:row.id, name, quantity:isNaN(q)?null:q, unit, manual:true, checked:false});
     $('#addName').value=''; $('#addQty').value=''; $('#addName').focus();
     renderShop();
   }catch(e){ toast('No pude añadir: '+e.message); }
+}
+async function resetShoppingDays(){
+  if(markedTotal<=0){ toast('No hay días marcados en el carrito.'); return; }
+  if(!confirm('¿Desmarcar todos los días del carrito?\nLos productos añadidos a mano se conservan.')) return;
+  try{
+    await shoppingApi.clearDays(family.id);
+    for(const k in cache) delete cache[k];
+    markedTotal=0; setBadge();
+    await renderWeek();
+    if(!$('#shopModal').hidden){ await openShop(); }
+    toast('Carrito reseteado: días desmarcados, productos manuales conservados.');
+  }catch(e){ toast('No pude resetear: '+e.message); }
 }
 
 // ================= Navegación entre semanas =================
@@ -695,8 +711,9 @@ $('#openShop').addEventListener('click',openShop);
 // Fila de "añadir producto" a la compra
 $('#addUnit').innerHTML='<option value=""></option>'+UNITS.map(u=>`<option>${u}</option>`).join('');
 $('#addBtn').addEventListener('click',addManualItem);
+$('#shopReset').addEventListener('click',resetShoppingDays);
 $('#addName').addEventListener('keydown',e=>{ if(e.key==='Enter') addManualItem(); });
-$('#cartSwitch').addEventListener('click',async()=>{ current.cart=!current.cart; syncCartSwitch(); try{ await weekApi.setDayShopping(family.id,current.date,current.cart);}catch(e){toast(e.message);} });
+$('#cartSwitch').addEventListener('click',async()=>{ current.cart=!current.cart; syncCartSwitch(); markedTotal+=current.cart?1:-1; setBadge(); try{ await weekApi.setDayShopping(family.id,current.date,current.cart);}catch(e){toast(e.message);} });
 $('#addComida').addEventListener('click',()=>{if(current.comida.length<4){current.comida.push({id:null,rid:null,texto:''});renderDishes();}});
 $('#addCena').addEventListener('click',()=>{if(current.cena.length<4){current.cena.push({id:null,rid:null,texto:''});renderDishes();}});
 $('#unicoComida').addEventListener('click',async function(){ if(current.comida.length>1){ const extra=current.comida.slice(1); for(const d of extra){ if(d.id) try{await weekApi.removeDish(d.id);}catch(e){} } current.comida=[current.comida[0]]; this.textContent='Dos platos'; } else { current.comida.push({id:null,rid:null,texto:''}); this.textContent='Plato único'; } renderDishes(); });
@@ -725,6 +742,7 @@ $('#weekLabel').addEventListener('click',()=>{ if(weekOffset!==0){ const d=weekO
 
 // ================= Arranque =================
 await loadRecipes();
+try{ markedTotal = await shoppingApi.countMarkedDays(family.id); }catch(e){ markedTotal = 0; }
 await renderWeek();
 </script>
 </body>
