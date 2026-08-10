@@ -23,10 +23,15 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 /* barra superior (nivel semanario) */
 .topbar{position:sticky; top:0; z-index:60; margin:10px 0 12px;
   background:linear-gradient(135deg,var(--orange),var(--orange-dark)); color:#fff; border-radius:16px;
-  padding:12px 14px; box-shadow:var(--shadow); display:flex; align-items:center; gap:10px}
-.topbar .brand{flex:1; min-width:0}
-.topbar .brand h1{margin:0; font-size:17px; font-weight:800}
-.topbar .brand .wk{font-size:11.5px; opacity:.9}
+  padding:12px 14px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:10px}
+.tb-top{display:flex; align-items:center; gap:10px}
+.tb-top h1{margin:0; font-size:24px; font-weight:800; letter-spacing:.5px; flex:1; min-width:0}
+.tb-top .fam-name{flex:0 1 auto}
+.tb-top-right{flex:1; display:flex; justify-content:flex-end}
+.tb-bottom{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.tb-left{display:flex; align-items:center; gap:8px; min-width:0}
+.tb-left .wk{font-size:12.5px; font-weight:700; opacity:.95; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.tb-actions{display:flex; align-items:center; gap:8px; flex:none}
 .nav{display:flex; gap:5px}
 .nav button{border:none; background:rgba(255,255,255,.18); color:#fff; width:30px; height:30px; border-radius:9px; font-size:15px; cursor:pointer; font-family:inherit}
 .compra-btn{position:relative; border:none; cursor:pointer; font-family:inherit; background:rgba(255,255,255,.2);
@@ -222,7 +227,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 @media (prefers-reduced-motion: reduce){ *{transition:none !important} .mq.run>span{animation:none} }
 :focus-visible{outline:3px solid #ffb08c; outline-offset:2px; border-radius:6px}
 
-.fam-name{font-size:12px; font-weight:800; color:#fff; opacity:.95; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.fam-name{font-size:21px; font-weight:800; color:#fff; opacity:.97; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .logout-btn{border:none; background:rgba(255,255,255,.18); color:#fff; font-family:inherit; font-weight:800; font-size:12px; padding:9px 11px; border-radius:11px; cursor:pointer}
 .logout-btn:hover{background:rgba(255,255,255,.3)}
 </style>
@@ -231,9 +236,21 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 <div class="wrap">
 
 <div class="topbar">
-  <div class="brand"><h1>Semanario Familiar</h1><span class="wk" id="weekLabel" title="Volver a la semana actual">Semana del 2 – 8 ago</span></div>
-  <div class="nav"><button id="prevWeek" title="Semana anterior">‹</button><button id="nextWeek" title="Semana siguiente">›</button></div>
-  <span class="fam-name" id="famName"></span><button class="logout-btn" id="logoutBtn" title="Cerrar sesión">Salir</button><button class="compra-btn" id="openShop">🛒 <span class="count" id="shopCount">0</span></button><button class="reset-btn" id="shopReset" title="Vaciar días del carrito (conserva los productos manuales)">🧹</button>
+  <div class="tb-top">
+    <h1>SF</h1>
+    <span class="fam-name" id="famName"></span>
+    <div class="tb-top-right"><button class="logout-btn" id="logoutBtn" title="Cerrar sesión">Salir</button></div>
+  </div>
+  <div class="tb-bottom">
+    <div class="tb-left">
+      <div class="nav"><button id="prevWeek" title="Semana anterior">‹</button><button id="nextWeek" title="Semana siguiente">›</button></div>
+      <span class="wk" id="weekLabel" title="Volver a la semana actual">—</span>
+    </div>
+    <div class="tb-actions">
+      <button class="compra-btn" id="openShop">🛒 <span class="count" id="shopCount">0</span></button>
+      <button class="reset-btn" id="shopReset" title="Vaciar días del carrito (conserva los productos manuales)">🧹</button>
+    </div>
+  </div>
 </div>
 
 <div class="week" id="week"></div>
@@ -430,7 +447,7 @@ async function renderWeek(dir){
   });
   setBadge();
   const mon=mondayForOffset(weekOffset);
-  $('#weekLabel').textContent='Semana del '+rangeLabel(mon,addDays(mon,6));
+  $('#weekLabel').textContent=rangeLabel(mon,addDays(mon,6));
   if(dir){ wk.classList.remove('in-next','in-prev'); void wk.offsetWidth; wk.classList.add(dir>0?'in-next':'in-prev'); }
 }
 function sideName(dish){ return dish.side_rid ? (byId(dish.side_rid)?.nombre||'guarnición') : (dish.side_text||''); }
