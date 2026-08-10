@@ -221,14 +221,12 @@ export const events = {
 //  días marcados con 🛒, suma repetidos y aparta los básicos de despensa.
 // ============================================================
 export const shopping = {
-  async generate(familyId, anyDateInWeek = new Date()) {
-    const monday = mondayOf(anyDateInWeek), from = iso(monday), to = iso(addDays(monday, 6)), weekStart = from;
-
+  async generate(familyId) {
     const [{ data: plans }, { data: pantry }, { data: basics }, { data: manual }] = await Promise.all([
-      supabase.from('plan_days').select('day').eq('family_id', familyId).eq('include_in_shopping', true).gte('day', from).lte('day', to),
+      supabase.from('plan_days').select('day').eq('family_id', familyId).eq('include_in_shopping', true).order('day'),
       supabase.from('pantry_items').select('name').eq('family_id', familyId),
       supabase.from('ingredients').select('name').eq('is_basic', true),
-      supabase.from('shopping_items').select('*').eq('family_id', familyId).eq('week_start', weekStart),
+      supabase.from('shopping_items').select('*').eq('family_id', familyId),
     ]);
     const days = (plans || []).map(p => p.day);
     const basicSet = new Set([...(pantry || []), ...(basics || [])].map(x => x.name.trim().toLowerCase()));
@@ -268,21 +266,36 @@ export const shopping = {
     }
     const all = [...map.values()];
     const manualItems = (manual || []).map(m => ({ id: m.id, name: m.name, quantity: m.quantity, unit: m.unit, manual: true }));
-    return { days, weekStart, buy: [...all.filter(x => !x.basic), ...manualItems], pantry: all.filter(x => x.basic) };
+    return { days, buy: [...all.filter(x => !x.basic), ...manualItems], pantry: all.filter(x => x.basic) };
   },
 
-  // Productos añadidos a mano (limpieza, pan, servilletas…). Persisten por semana.
-  async addManual(familyId, weekStart, name, quantity, unit) {
+  // Productos añadidos a mano (limpieza, pan, servilletas…). Globales (no por semana).
+  async addManual(familyId, name, quantity, unit) {
     const { data, error } = await supabase.from('shopping_items')
-      .insert({ family_id: familyId, week_start: weekStart, name, quantity: (quantity ?? null), unit: (unit || null), source: 'manual' })
+      .insert({ family_id: familyId, week_start: iso(mondayOf(new Date())), name, quantity: (quantity ?? null), unit: (unit || null), source: 'manual' })
       .select().single();
     if (error) throw error; return data;
   },
   removeManual(id) { return supabase.from('shopping_items').delete().eq('id', id); },
 
-  // Genera el texto para el enlace de WhatsApp (wa.me)
-  whatsappUrl({ days, buy }) {
-    const txt = `🛒 Lista de la compra${days.length ? ' · ' + days.join(', ') : ''}\n\n`
+  // Nº de días marcados con 🛒 (global, para el contador de arriba)
+  async countMarkedDays(familyId) {
+    const { count, error } = await supabase.from('plan_days')
+      .select('day', { count: 'exact', head: true })
+      .eq('family_id', familyId).eq('include_in_shopping', true);
+    if (error) throw error; return count || 0;
+  },
+  // Desmarca TODOS los días (deja solo los productos manuales)
+  async clearDays(familyId) {
+    const { error } = await supabase.from('plan_days')
+      .update({ include_in_shopping: false })
+      .eq('family_id', familyId).eq('include_in_shopping', true);
+    if (error) throw error;
+  },
+
+  // Genera el texto para el enlace de WhatsApp (wa.me). Recibe solo lo que se debe comprar.
+  whatsappUrl({ buy }) {
+    const txt = '🛒 Lista de la compra\n\n'
       + buy.map(x => `• ${x.name}${x.quantity ? ` — ${x.quantity} ${x.unit}` : ''}`).join('\n');
     return 'https://wa.me/?text=' + encodeURIComponent(txt);
   },
