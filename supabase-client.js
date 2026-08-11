@@ -159,9 +159,9 @@ export const week = {
         .map(x => ({ id: x.id, recipe_id: x.recipe_id, free_text: x.free_text, title: x.recipes?.title || x.free_text || '', side_recipe_id: x.side_recipe_id, side_text: x.side_text }));
 
       const puntuales = (eventsR.data || []).filter(e => e.day === dISO)
-        .map(e => ({ id: e.id, at_time: e.at_time, title: e.title, color: e.color, recurring: false }));
-      const recurrentes = recurring.filter(r => r.weekday === wd && !isExcepted(r.id, dISO))
-        .map(r => ({ recurring_id: r.id, at_time: r.at_time, title: r.title, color: r.color, recurring: true }));
+        .map(e => ({ id: e.id, at_time: e.at_time, title: e.title, color: e.color, member_ids: e.member_ids || [], recurring: false }));
+      const recurrentes = recurring.filter(r => (r.weekdays || []).includes(wd) && !isExcepted(r.id, dISO))
+        .map(r => ({ recurring_id: r.id, at_time: r.at_time, title: r.title, color: r.color, member_ids: r.member_ids || [], weekdays: r.weekdays || [], recurring: true }));
       const eventos = [...puntuales, ...recurrentes]
         .sort((a, b) => String(a.at_time || '').localeCompare(String(b.at_time || '')));
 
@@ -193,18 +193,29 @@ export const week = {
 };
 
 export const events = {
-  add(familyId, dayISO, { at_time = null, title, color = null }) {
-    return supabase.from('events').insert({ family_id: familyId, day: dayISO, at_time, title, color }).select().single();
+  async add(familyId, dayISO, { at_time = null, title, color = null, member_ids = [] }) {
+    const { data, error } = await supabase.from('events')
+      .insert({ family_id: familyId, day: dayISO, at_time, title, color, member_ids }).select().single();
+    if (error) throw error; return data;
   },
-  update(eventId, patch) { return supabase.from('events').update(patch).eq('id', eventId).select().single(); },
-  remove(eventId) { return supabase.from('events').delete().eq('id', eventId); },
+  async update(eventId, patch) {
+    const { data, error } = await supabase.from('events').update(patch).eq('id', eventId).select().single();
+    if (error) throw error; return data;
+  },
+  async remove(eventId) { const { error } = await supabase.from('events').delete().eq('id', eventId); if (error) throw error; },
 
   recurring: {
-    list(familyId) { return supabase.from('recurring_events').select('*').eq('family_id', familyId).order('weekday'); },
-    add(familyId, { weekday, at_time = null, title, color = null }) {
-      return supabase.from('recurring_events').insert({ family_id: familyId, weekday, at_time, title, color }).select().single();
+    list(familyId) { return supabase.from('recurring_events').select('*').eq('family_id', familyId); },
+    async add(familyId, { weekdays = [], at_time = null, title, color = null, member_ids = [] }) {
+      const { data, error } = await supabase.from('recurring_events')
+        .insert({ family_id: familyId, weekdays, at_time, title, color, member_ids, active: true }).select().single();
+      if (error) throw error; return data;
     },
-    remove(recurringId) { return supabase.from('recurring_events').delete().eq('id', recurringId); },
+    async update(recurringId, patch) {
+      const { data, error } = await supabase.from('recurring_events').update(patch).eq('id', recurringId).select().single();
+      if (error) throw error; return data;
+    },
+    async remove(recurringId) { const { error } = await supabase.from('recurring_events').delete().eq('id', recurringId); if (error) throw error; },
     // "Esta semana no": marca excepción para un recurrente en un día concreto
     skipOn(recurringId, dayISO) {
       return supabase.from('recurring_exceptions').upsert({ recurring_id: recurringId, day: dayISO });

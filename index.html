@@ -132,6 +132,18 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .garnish .gdrop{position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:40; background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:0 12px 30px rgba(20,15,10,.16); overflow:hidden; padding:5px}
 .garnish .gdrop[hidden]{display:none}
 .rf-side{display:flex; align-items:center; gap:9px; font-size:13.5px; font-weight:700; color:var(--ink); background:#faf6ff; border:1.5px solid #ecdffb; border-radius:11px; padding:11px 12px; margin-bottom:12px; cursor:pointer}
+.members-chips{display:flex; flex-wrap:wrap; gap:7px}
+.mchip-btn{display:inline-flex; align-items:center; gap:7px; border:1.5px solid var(--line); background:#fafafb; border-radius:999px; padding:7px 12px; font-family:inherit; font-weight:700; font-size:12.5px; color:#55555e; cursor:pointer}
+.mchip-btn .dot{width:11px; height:11px; border-radius:50%; flex:none}
+.mchip-btn.on{border-color:var(--ink); background:#fff; color:var(--ink); box-shadow:0 0 0 2px rgba(0,0,0,.05)}
+.weekday-chips{display:flex; gap:6px}
+.wd-btn{flex:1; border:1.5px solid var(--line); background:#fafafb; border-radius:9px; padding:9px 0; font-family:inherit; font-weight:800; font-size:13px; color:#77777f; cursor:pointer}
+.wd-btn.on{border-color:var(--orange); background:#fff2ea; color:var(--orange-dark)}
+.ev-foot{display:flex; align-items:center; gap:9px; padding:12px 18px 16px; border-top:1px solid var(--line)}
+.btn.danger{background:#fdecea; color:#c0392b; flex:none} .btn.danger:hover{background:#f8d7d2}
+.ev-foot .btn.ghost{flex:none} .ev-foot .btn.primary{flex:none}
+.ev-item{cursor:pointer}
+.ev-members{font-size:11px; color:var(--muted); margin-left:6px}
 .rf-side input{width:18px; height:18px; accent-color:#7a4fb0}
 .pill{font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px; white-space:nowrap}
 #rSeason{flex:none}
@@ -344,6 +356,30 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
   </div>
 </div>
 
+<!-- Modal formulario de EVENTO -->
+<div class="backdrop center" id="eventModal" hidden>
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="evTitle">Nuevo evento</h2><button class="x-dark" id="evClose">×</button></div>
+    <div class="sheet-body">
+      <div class="field"><label>Descripción</label><input id="evDesc" type="text" placeholder="Ej: Dentista, entrenamiento…" autocomplete="off"></div>
+      <div class="field"><label>Hora <span class="lbl-hint">— opcional</span></label><input id="evTime" type="time"></div>
+      <div class="field"><label>¿A quién afecta? <span class="lbl-hint">— nadie = toda la familia</span></label>
+        <div class="members-chips" id="evMembers"></div>
+      </div>
+      <label class="rf-side" id="evRecLabel"><input type="checkbox" id="evRecurring"> ♻ Se repite cada semana</label>
+      <div class="field" id="evWeekdaysField" style="display:none"><label>Días de repetición</label>
+        <div class="weekday-chips" id="evWeekdays"></div>
+      </div>
+    </div>
+    <div class="ev-foot">
+      <button class="btn danger" id="evDelete" style="display:none">Eliminar</button>
+      <span style="flex:1"></span>
+      <button class="btn ghost" id="evCancel">Cancelar</button>
+      <button class="btn primary" id="evSave">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal lista de compra GLOBAL -->
 <div class="backdrop center" id="shopModal" hidden>
   <div class="sheet">
@@ -367,7 +403,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { auth, recipes as recipesApi, week as weekApi, shopping as shoppingApi, iso, addDays, mondayOf } from './supabase-client.js';
+import { auth, families as familiesApi, recipes as recipesApi, week as weekApi, events as eventsApi, shopping as shoppingApi, iso, addDays, mondayOf } from './supabase-client.js';
 
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -412,7 +448,7 @@ function toUiDay(d,i){
     cart:!!d.include_in_shopping,
     comida:d.comida.map(x=>({id:x.id,rid:x.recipe_id,texto:x.title||x.free_text||'',side_rid:x.side_recipe_id,side_text:x.side_text})),
     cena:d.cena.map(x=>({id:x.id,rid:x.recipe_id,texto:x.title||x.free_text||'',side_rid:x.side_recipe_id,side_text:x.side_text})),
-    eventos:d.eventos.map(e=>({id:e.id,recurring_id:e.recurring_id,hora:(e.at_time||'').slice(0,5),titulo:e.title,color:e.color||'#8a8a94',recurring:!!e.recurring}))};
+    eventos:d.eventos.map(e=>({id:e.id,recurring_id:e.recurring_id,hora:(e.at_time||'').slice(0,5),titulo:e.title,color:e.color||'#8a8a94',recurring:!!e.recurring,member_ids:e.member_ids||[],weekdays:e.weekdays||[]}))};
 }
 async function getWeek(off){
   if(!cache[off]){ const days=await weekApi.get(family.id, mondayForOffset(off)); cache[off]=days.map(toUiDay); }
@@ -442,6 +478,7 @@ async function renderWeek(dir){
     card.querySelector('.dc-cart').addEventListener('click',e=>e.stopPropagation());
     cb.addEventListener('change',async()=>{ d.cart=cb.checked; card.classList.toggle('marked',d.cart); markedTotal+=cb.checked?1:-1; setBadge(); try{ await weekApi.setDayShopping(family.id,d.date,d.cart);}catch(err){toast(err.message);} });
     card.querySelectorAll('.book').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openRecipe(b.dataset.rid);}));
+    card.querySelector('.dc-hr .plus')?.addEventListener('click',e=>{e.stopPropagation();openEventForm(d.date);});
     card.addEventListener('click',()=>openEditor(d));
     wk.appendChild(card);
   });
@@ -583,11 +620,96 @@ async function removeDish(key,i){
 }
 
 // ================= Eventos (solo lectura en esta fase) =================
+// ================= MIEMBROS y COLORES =================
+let MEMBERS=[];
+const EV_PALETTE=['#e76f51','#2a9d8f','#457b9d','#9b5de5','#e9c46a','#d1495b','#3d8bfd','#f4a259','#6a994e','#bc4749'];
+function hashStr(s){ let h=0; for(let i=0;i<(s||'').length;i++){ h=(h*31+s.charCodeAt(i))>>>0; } return h; }
+function memberColor(id){ return EV_PALETTE[hashStr(id)%EV_PALETTE.length]; }
+function memberName(id){ const m=MEMBERS.find(x=>x.id===id); return m?(m.display_name||'Miembro'):'—'; }
+async function loadMembers(){ try{ MEMBERS=await familiesApi.members(family.id); }catch(e){ MEMBERS=[]; } }
+
+// ================= LISTA DE EVENTOS DEL EDITOR =================
 function renderEventEdit(){
   const ul=$('#eventEditList');
-  ul.innerHTML=current.eventos.length
-    ? current.eventos.map(e=>`<li class="ev-item" style="border-left-color:${e.color}"><span class="hora" style="color:${e.color}">${e.hora}</span><span class="titulo">${esc(e.titulo)}${e.recurring?' <span style="color:#9b5de5">♻</span>':''}</span></li>`).join('')
-    : '<div class="ev-none">Sin eventos este día.</div>';
+  if(!current.eventos.length){ ul.innerHTML='<div class="ev-none">Sin eventos este día.</div>'; return; }
+  ul.innerHTML='';
+  current.eventos.forEach((e,i)=>{
+    const nombres=(e.member_ids||[]).map(memberName).filter(Boolean).join(', ');
+    const li=document.createElement('li'); li.className='ev-item'; li.style.borderLeftColor=e.color;
+    li.innerHTML=`<span class="hora" style="color:${e.color}">${e.hora||'—'}</span><span class="titulo">${esc(e.titulo)}${e.recurring?' <span style="color:#9b5de5">♻</span>':''}${nombres?`<span class="ev-members">· ${esc(nombres)}</span>`:''}</span>`;
+    li.addEventListener('click',()=>openEventForm(current.date, e));
+    ul.appendChild(li);
+  });
+}
+
+// ================= FORMULARIO DE EVENTO =================
+let evState=null; // { day, editing }
+function openEventForm(dayISO, existing=null){
+  evState={ day:dayISO, editing:existing };
+  $('#evTitle').textContent = existing ? 'Editar evento' : 'Nuevo evento';
+  $('#evDesc').value = existing ? existing.titulo : '';
+  $('#evTime').value = existing && existing.hora ? existing.hora : '';
+  const rec = !!(existing && existing.recurring);
+  $('#evRecurring').checked = rec;
+  $('#evWeekdaysField').style.display = rec ? 'block' : 'none';
+  $('#evDelete').style.display = existing ? 'inline-block' : 'none';
+  // chips de miembros
+  const sel = new Set(existing ? (existing.member_ids||[]) : []);
+  $('#evMembers').innerHTML = MEMBERS.length
+    ? MEMBERS.map(m=>`<button type="button" class="mchip-btn${sel.has(m.id)?' on':''}" data-id="${m.id}"><span class="dot" style="background:${memberColor(m.id)}"></span>${esc(m.display_name||'Miembro')}</button>`).join('')
+    : '<span style="color:#b6b6bf;font-size:12.5px">Solo tú por ahora. Invita a la familia con el código.</span>';
+  $('#evMembers').querySelectorAll('.mchip-btn').forEach(b=>b.addEventListener('click',()=>b.classList.toggle('on')));
+  // chips de días (L..D = 0..6)
+  const wsel = new Set(existing && existing.recurring ? (existing.weekdays||[]) : (existing?[]:[weekdayOfISO(dayISO)]));
+  $('#evWeekdays').innerHTML = DOW.map((l,idx)=>`<button type="button" class="wd-btn${wsel.has(idx)?' on':''}" data-wd="${idx}">${l}</button>`).join('');
+  $('#evWeekdays').querySelectorAll('.wd-btn').forEach(b=>b.addEventListener('click',()=>b.classList.toggle('on')));
+  $('#eventModal').hidden=false;
+  setTimeout(()=>$('#evDesc').focus(),0);
+}
+function weekdayOfISO(dISO){ const d=new Date(dISO+'T00:00:00'); return (d.getDay()+6)%7; }
+function evSelectedMembers(){ return [...$('#evMembers').querySelectorAll('.mchip-btn.on')].map(b=>b.dataset.id); }
+function evSelectedWeekdays(){ return [...$('#evWeekdays').querySelectorAll('.wd-btn.on')].map(b=>+b.dataset.wd); }
+
+async function saveEvent(){
+  const title=$('#evDesc').value.trim();
+  if(!title){ $('#evDesc').focus(); toast('Ponle una descripción al evento.'); return; }
+  const at_time = $('#evTime').value || null;
+  const member_ids = evSelectedMembers();
+  const color = member_ids.length ? memberColor(member_ids[0]) : '#8a8a94';
+  const wantRecurring = $('#evRecurring').checked;
+  const weekdays = evSelectedWeekdays();
+  if(wantRecurring && !weekdays.length){ toast('Marca al menos un día de repetición.'); return; }
+  const ex = evState.editing;
+  try{
+    if(wantRecurring){
+      if(ex && ex.recurring){ await eventsApi.recurring.update(ex.recurring_id,{ title, at_time, color, member_ids, weekdays }); }
+      else { if(ex && !ex.recurring) await eventsApi.remove(ex.id); await eventsApi.recurring.add(family.id,{ weekdays, at_time, title, color, member_ids }); }
+    } else {
+      if(ex && !ex.recurring){ await eventsApi.update(ex.id,{ title, at_time, color, member_ids }); }
+      else { if(ex && ex.recurring) await eventsApi.recurring.remove(ex.recurring_id); await eventsApi.add(family.id, evState.day,{ at_time, title, color, member_ids }); }
+    }
+    $('#eventModal').hidden=true;
+    await refreshAfterEvent();
+    toast('Evento guardado ✓');
+  }catch(e){ toast('No se pudo guardar el evento: '+e.message); }
+}
+async function deleteEvent(){
+  const ex=evState.editing; if(!ex) return;
+  if(!confirm('¿Eliminar este evento?')) return;
+  try{
+    if(ex.recurring) await eventsApi.recurring.remove(ex.recurring_id); else await eventsApi.remove(ex.id);
+    $('#eventModal').hidden=true;
+    await refreshAfterEvent();
+    toast('Evento eliminado.');
+  }catch(e){ toast('No se pudo eliminar: '+e.message); }
+}
+async function refreshAfterEvent(){
+  for(const k in cache) delete cache[k];              // los recurrentes afectan a todas las semanas
+  await renderWeek();
+  if(!$('#editorModal').hidden && current){
+    const fresh=(await getWeek(weekOffset)).find(d=>d.date===current.date);
+    if(fresh){ current=fresh; renderEventEdit(); }
+  }
 }
 
 // ================= Ver receta (📖) =================
@@ -735,7 +857,12 @@ $('#addComida').addEventListener('click',()=>{if(current.comida.length<4){curren
 $('#addCena').addEventListener('click',()=>{if(current.cena.length<4){current.cena.push({id:null,rid:null,texto:''});renderDishes();}});
 $('#unicoComida').addEventListener('click',async function(){ if(current.comida.length>1){ const extra=current.comida.slice(1); for(const d of extra){ if(d.id) try{await weekApi.removeDish(d.id);}catch(e){} } current.comida=[current.comida[0]]; this.textContent='Dos platos'; } else { current.comida.push({id:null,rid:null,texto:''}); this.textContent='Plato único'; } renderDishes(); });
 $('#unicoCena').addEventListener('click',async function(){ if(current.cena.length>1){ const extra=current.cena.slice(1); for(const d of extra){ if(d.id) try{await weekApi.removeDish(d.id);}catch(e){} } current.cena=[current.cena[0]]; this.textContent='Dos platos'; } else { current.cena.push({id:null,rid:null,texto:''}); this.textContent='Plato único'; } renderDishes(); });
-$('#addEvent').addEventListener('click',()=>toast('La edición de eventos llega en el siguiente paso.'));
+$('#addEvent').addEventListener('click',()=>openEventForm(current.date));
+$('#evRecurring').addEventListener('change',function(){ $('#evWeekdaysField').style.display=this.checked?'block':'none'; });
+$('#evSave').addEventListener('click',saveEvent);
+$('#evDelete').addEventListener('click',deleteEvent);
+$('#evClose').addEventListener('click',()=>$('#eventModal').hidden=true);
+$('#evCancel').addEventListener('click',()=>$('#eventModal').hidden=true);
 $('#save').addEventListener('click',closeEditor);
 
 ['#rfName','#rfTime','#rfDesc','#rfLink'].forEach(sel=>$(sel).addEventListener('input',commitMeta));
@@ -759,6 +886,7 @@ $('#weekLabel').addEventListener('click',()=>{ if(weekOffset!==0){ const d=weekO
 
 // ================= Arranque =================
 await loadRecipes();
+await loadMembers();
 try{ markedTotal = await shoppingApi.countMarkedDays(family.id); }catch(e){ markedTotal = 0; }
 await renderWeek();
 </script>
