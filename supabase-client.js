@@ -60,16 +60,48 @@ export const families = {
     if (error) throw error; return data;
   },
   async mine() {
+    const { data: { user } } = await supabase.auth.getUser();
     const { data, error } = await supabase
-      .from('memberships').select('role, families(id, name, invite_code)');
+      .from('memberships').select('role, families(id, name, invite_code)')
+      .eq('user_id', user.id);
     if (error) throw error;
     return (data || []).map(m => ({ ...m.families, role: m.role }));
   },
   async members(familyId) {
     const { data, error } = await supabase
-      .from('memberships').select('role, profiles(id, display_name)').eq('family_id', familyId);
+      .from('memberships').select('role, profiles(id, display_name, color)').eq('family_id', familyId);
     if (error) throw error;
     return (data || []).map(m => ({ ...m.profiles, role: m.role }));
+  },
+};
+
+// ============================================================
+//  PERFIL (nombre, color, contraseña)
+// ============================================================
+export const profiles = {
+  async me() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    let display_name = '', color = null;
+    const { data, error } = await supabase.from('profiles').select('id, display_name, color').eq('id', user.id).single();
+    if (!error && data) { display_name = data.display_name || ''; color = data.color || null; }
+    else {
+      const { data: d2 } = await supabase.from('profiles').select('id, display_name').eq('id', user.id).single();
+      display_name = d2?.display_name || '';
+    }
+    return { id: user.id, email: user.email, display_name, color };
+  },
+  async update({ display_name, color }) {
+    const { data: { user } } = await supabase.auth.getUser();
+    const patch = {};
+    if (display_name !== undefined) patch.display_name = display_name;
+    if (color !== undefined) patch.color = color;
+    const { error } = await supabase.from('profiles').update(patch).eq('id', user.id);
+    if (error) throw error;
+  },
+  async updatePassword(newPassword) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
   },
 };
 

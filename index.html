@@ -28,6 +28,22 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
   padding:12px 14px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:10px}
 .tb-top{display:flex; align-items:center; gap:10px}
 .tb-top h1{margin:0; font-size:24px; font-weight:800; letter-spacing:.5px; flex:1; min-width:0}
+.avatar-btn{border:2px solid rgba(255,255,255,.9); background:#8a8a94; width:38px; height:38px; border-radius:50%; cursor:pointer; color:#fff; font-weight:800; font-size:17px; display:grid; place-items:center; padding:0; flex:none}
+.avatar-btn:hover{filter:brightness(1.06)}
+.ev-dots{display:inline-flex; gap:2px; vertical-align:middle}
+.ev-dot{width:8px; height:8px; border-radius:50%; display:inline-block}
+.color-swatches{display:flex; flex-wrap:wrap; gap:9px}
+.sw{width:30px; height:30px; border-radius:50%; cursor:pointer; border:3px solid transparent; box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.sw.on{border-color:var(--ink)}
+.pf-fams{display:flex; flex-direction:column; gap:8px}
+.pf-fam{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1.5px solid var(--line); border-radius:11px; padding:10px 12px}
+.pf-fam.current{border-color:var(--orange); background:#fff6f1}
+.pf-fam .n{font-weight:800; font-size:14px}
+.pf-fam .role{font-size:11px; color:var(--muted)}
+.pf-use{border:none; background:var(--orange); color:#fff; font-weight:800; font-size:12px; padding:7px 12px; border-radius:9px; cursor:pointer; font-family:inherit; flex:none}
+.pf-current-tag{font-size:11px; font-weight:800; color:var(--orange-dark); flex:none}
+.pf-pass summary{cursor:pointer; font-weight:700; font-size:13px; color:var(--muted); padding:6px 0}
+.field input:disabled{background:#f2f2f4; color:#9a9aa2}
 .tb-top .fam-name{flex:0 1 auto}
 .tb-top-right{flex:1; display:flex; justify-content:flex-end}
 .tb-bottom{display:flex; align-items:center; justify-content:space-between; gap:8px}
@@ -73,7 +89,10 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 
 .dc-events{padding:8px; background:#f7f7f9; max-height:158px; overflow-y:auto; overflow-x:hidden; min-width:0}
 .dc-events .none{font-size:10.5px; color:#c2c2ca; padding:6px 2px}
-.evrow{background:#fff; border-radius:7px; padding:4px 7px; border-left:3px solid var(--muted); box-shadow:0 1px 3px rgba(0,0,0,.05); margin-bottom:4px; min-width:0; overflow:hidden}
+.evrow{display:flex; align-items:stretch; background:#fff; border-radius:7px; box-shadow:0 1px 3px rgba(0,0,0,.05); margin-bottom:4px; min-width:0; overflow:hidden}
+.ev-stripe{display:flex; flex:none}
+.ev-stripe i{width:4px; display:block}
+.ev-body{flex:1; min-width:0; padding:4px 7px}
 .evrow:last-child{margin-bottom:0}
 .evrow .t{font-size:9px; font-weight:800}
 
@@ -183,7 +202,9 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .opt-new:hover{background:#fff0e7}
 
 .ev-edit{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px}
-.ev-item{display:flex; align-items:center; gap:10px; background:#fafafb; border-radius:11px; padding:9px 11px; border-left:4px solid var(--muted)}
+.ev-item{display:flex; align-items:stretch; background:#fafafb; border-radius:11px; overflow:hidden}
+.ev-item .ev-in{flex:1; min-width:0; display:flex; align-items:center; gap:10px; padding:9px 11px}
+.ev-item .ev-stripe i{width:5px}
 .ev-item .hora{font-size:11px; font-weight:800; flex:none; width:42px}
 .ev-item .titulo{font-size:13px; font-weight:600; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .ev-none{font-size:12.5px; color:#b6b6bf; padding:4px 2px}
@@ -268,7 +289,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 
 <div class="topbar">
   <div class="tb-top">
-    <h1>SF</h1>
+    <button class="avatar-btn" id="profileBtn" title="Tu perfil"><span id="avatarLabel">·</span></button>
     <span class="fam-name" id="famName"></span>
     <div class="tb-top-right"><button class="logout-btn" id="logoutBtn" title="Cerrar sesión">Salir</button></div>
   </div>
@@ -375,6 +396,24 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
   </div>
 </div>
 
+<!-- Modal PERFIL -->
+<div class="backdrop center" id="profileModal" hidden>
+  <div class="sheet">
+    <div class="sheet-head"><h2>Tu perfil</h2><button class="x-dark" data-close="profileModal">×</button></div>
+    <div class="sheet-body">
+      <div class="field"><label>Nombre</label><input id="pfName" type="text" autocomplete="off"></div>
+      <div class="field"><label>Tu color</label><div class="color-swatches" id="pfColors"></div></div>
+      <div class="field"><label>Email</label><input id="pfEmail" type="text" disabled></div>
+      <div class="field"><label>Tus familias <span class="lbl-hint">— toca “Usar” para cambiar</span></label><div id="pfFamilies" class="pf-fams"></div></div>
+      <details class="pf-pass"><summary>Cambiar contraseña</summary>
+        <div class="field" style="margin-top:10px"><input id="pfPass" type="password" placeholder="Nueva contraseña (mín. 6)" autocomplete="new-password"></div>
+        <button class="btn ghost" id="pfPassBtn" style="width:100%">Actualizar contraseña</button>
+      </details>
+    </div>
+    <div class="ev-foot"><span style="flex:1"></span><button class="btn ghost" id="pfCancel">Cerrar</button><button class="btn primary" id="pfSave">Guardar</button></div>
+  </div>
+</div>
+
 <!-- Modal formulario de EVENTO -->
 <div class="backdrop center" id="eventModal" hidden>
   <div class="sheet">
@@ -422,10 +461,10 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { auth, families as familiesApi, recipes as recipesApi, week as weekApi, events as eventsApi, shopping as shoppingApi, iso, addDays, mondayOf } from './supabase-client.js';
+import { auth, families as familiesApi, profiles as profilesApi, recipes as recipesApi, week as weekApi, events as eventsApi, shopping as shoppingApi, iso, addDays, mondayOf } from './supabase-client.js';
 
 // --- Auto-actualización: si hay una versión más nueva publicada, recarga sin caché ---
-const APP_VERSION='v9';
+const APP_VERSION='v11';
 try{
   const _r=await fetch('version.txt?ts='+Date.now(),{cache:'no-store'});
   if(_r.ok){
@@ -505,7 +544,7 @@ async function renderWeek(dir){
       </div>
       <div class="dc-hr"><span class="evlbl">Eventos</span><span class="plus">+</span></div>
       <div class="dc-meals">${mealChip('sun','☀️',d.comida)}${mealChip('moon','🌙',d.cena)}</div>
-      <div class="dc-events">${d.eventos.length?d.eventos.map(e=>`<div class="evrow" style="border-left-color:${e.color}"><div class="t" style="color:${e.color}">${e.hora}${e.recurring?' ♻':''}</div>${mq(e.titulo)}</div>`).join(''):'<div class="none">Sin eventos</div>'}</div>`;
+      <div class="dc-events">${d.eventos.length?d.eventos.map(evRowHtml).join(''):'<div class="none">Sin eventos</div>'}</div>`;
     const cb=card.querySelector('.dc-cart input');
     card.querySelector('.dc-cart').addEventListener('click',e=>e.stopPropagation());
     cb.addEventListener('change',async()=>{ d.cart=cb.checked; card.classList.toggle('marked',d.cart); markedTotal+=cb.checked?1:-1; setBadge(); try{ await weekApi.setDayShopping(family.id,d.date,d.cart);}catch(err){toast(err.message);} });
@@ -662,19 +701,29 @@ async function removeDish(key,i){
 let MEMBERS=[];
 const EV_PALETTE=['#e76f51','#2a9d8f','#457b9d','#9b5de5','#e9c46a','#d1495b','#3d8bfd','#f4a259','#6a994e','#bc4749'];
 function hashStr(s){ let h=0; for(let i=0;i<(s||'').length;i++){ h=(h*31+s.charCodeAt(i))>>>0; } return h; }
-function memberColor(id){ return EV_PALETTE[hashStr(id)%EV_PALETTE.length]; }
+function memberColor(id){ const m=MEMBERS.find(x=>x.id===id); return (m&&m.color) ? m.color : EV_PALETTE[hashStr(id)%EV_PALETTE.length]; }
 function memberName(id){ const m=MEMBERS.find(x=>x.id===id); return m?(m.display_name||'Miembro'):'—'; }
+function eventColors(e){ const cols=(e.member_ids||[]).map(memberColor); return cols.length?cols:['#8a8a94']; }
+function evStripe(cs){ return `<span class="ev-stripe">${cs.map(c=>`<i style="background:${c}"></i>`).join('')}</span>`; }
+function evRowHtml(e){ const cs=eventColors(e); return `<div class="evrow">${evStripe(cs)}<div class="ev-body"><div class="t" style="color:${cs[0]}">${e.hora}${e.recurring?' ♻':''}</div>${mq(e.titulo)}</div></div>`; }
 async function loadMembers(){ try{ MEMBERS=await familiesApi.members(family.id); }catch(e){ MEMBERS=[]; } }
+
+// ---- Perfil del usuario (avatar + color) ----
+let MYPROFILE=null, pfColorSel=null;
+function myColor(){ return (MYPROFILE&&MYPROFILE.color) || (MYPROFILE?memberColor(MYPROFILE.id):'#8a8a94'); }
+function applyAvatar(){ if(!MYPROFILE)return; const b=$('#profileBtn'); if(b) b.style.background=myColor(); const l=$('#avatarLabel'); if(l) l.textContent=((MYPROFILE.display_name||'?').trim().charAt(0)||'?').toUpperCase(); }
+async function loadMyProfile(){ try{ MYPROFILE=await profilesApi.me(); }catch(e){ MYPROFILE=null; } applyAvatar(); }
 
 // ================= LISTA DE EVENTOS DEL EDITOR =================
 function renderEventEdit(){
   const ul=$('#eventEditList');
   if(!current.eventos.length){ ul.innerHTML='<div class="ev-none">Sin eventos este día.</div>'; return; }
   ul.innerHTML='';
-  current.eventos.forEach((e,i)=>{
+  current.eventos.forEach((e)=>{
+    const cs=eventColors(e);
     const nombres=(e.member_ids||[]).map(memberName).filter(Boolean).join(', ');
-    const li=document.createElement('li'); li.className='ev-item'; li.style.borderLeftColor=e.color;
-    li.innerHTML=`<span class="hora" style="color:${e.color}">${e.hora||'—'}</span><span class="titulo">${esc(e.titulo)}${e.recurring?' <span style="color:#9b5de5">♻</span>':''}${nombres?`<span class="ev-members">· ${esc(nombres)}</span>`:''}</span>`;
+    const li=document.createElement('li'); li.className='ev-item';
+    li.innerHTML=`${evStripe(cs)}<span class="ev-in"><span class="hora" style="color:${cs[0]}">${e.hora||'—'}</span><span class="titulo">${esc(e.titulo)}${e.recurring?' <span style="color:#9b5de5">♻</span>':''}${nombres?`<span class="ev-members">· ${esc(nombres)}</span>`:''}</span></span>`;
     li.addEventListener('click',()=>openEventForm(current.date, e));
     ul.appendChild(li);
   });
@@ -910,6 +959,46 @@ $('#rfClose').addEventListener('click',closeRecipeForm);
 $('#rfDone').addEventListener('click',closeRecipeForm);
 $('#rEdit').addEventListener('click',()=>{$('#recipeModal').hidden=true; openRecipeForm(openRid);});
 
+// ---- Perfil: abrir, guardar, cambiar familia, contraseña ----
+async function openProfile(){
+  if(!MYPROFILE) await loadMyProfile();
+  $('#pfName').value=MYPROFILE?.display_name||'';
+  $('#pfEmail').value=MYPROFILE?.email||'';
+  pfColorSel=myColor();
+  $('#pfColors').innerHTML=EV_PALETTE.map(c=>`<span class="sw${c===pfColorSel?' on':''}" data-c="${c}" style="background:${c}"></span>`).join('');
+  $('#pfColors').querySelectorAll('.sw').forEach(s=>s.addEventListener('click',()=>{ pfColorSel=s.dataset.c; $('#pfColors').querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===s)); }));
+  try{
+    const fams=await familiesApi.mine();
+    $('#pfFamilies').innerHTML=fams.map(f=>`<div class="pf-fam${f.id===family.id?' current':''}"><div><div class="n">${esc(f.name)}</div><div class="role">${f.role==='admin'?'Administrador':'Miembro'}</div></div>${f.id===family.id?'<span class="pf-current-tag">Actual</span>':`<button class="pf-use" data-id="${f.id}" data-name="${esc(f.name)}" data-code="${esc(f.invite_code)}" data-role="${f.role}">Usar</button>`}</div>`).join('');
+    $('#pfFamilies').querySelectorAll('.pf-use').forEach(b=>b.addEventListener('click',()=>{
+      localStorage.setItem('semanario.family', JSON.stringify({id:b.dataset.id, name:b.dataset.name, invite_code:b.dataset.code, role:b.dataset.role}));
+      location.reload();
+    }));
+  }catch(e){ $('#pfFamilies').innerHTML='<span style="color:#b6b6bf;font-size:13px">No pude cargar tus familias.</span>'; }
+  $('#profileModal').hidden=false;
+}
+async function saveProfile(){
+  try{
+    await profilesApi.update({ display_name:$('#pfName').value.trim(), color:pfColorSel });
+    MYPROFILE.display_name=$('#pfName').value.trim(); MYPROFILE.color=pfColorSel; applyAvatar();
+    await loadMembers();
+    for(const k in cache) delete cache[k];
+    await renderWeek();
+    $('#profileModal').hidden=true;
+    toast('Perfil guardado ✓');
+  }catch(e){ toast('No se pudo guardar: '+e.message); }
+}
+async function changePassword(){
+  const p=$('#pfPass').value;
+  if(!p || p.length<6){ toast('La contraseña debe tener al menos 6 caracteres.'); return; }
+  try{ await profilesApi.updatePassword(p); $('#pfPass').value=''; toast('Contraseña actualizada ✓'); }
+  catch(e){ toast('No se pudo cambiar: '+e.message); }
+}
+$('#profileBtn').addEventListener('click',openProfile);
+$('#pfSave').addEventListener('click',saveProfile);
+$('#pfCancel').addEventListener('click',()=>$('#profileModal').hidden=true);
+$('#pfPassBtn').addEventListener('click',changePassword);
+
 $('#prevWeek').addEventListener('click',()=>goWeek(-1));
 $('#nextWeek').addEventListener('click',()=>goWeek(1));
 $('#weekLabel').addEventListener('click',()=>{ if(weekOffset!==0){ const d=weekOffset<0?1:-1; weekOffset=0; renderWeek(d); } });
@@ -923,6 +1012,7 @@ $('#weekLabel').addEventListener('click',()=>{ if(weekOffset!==0){ const d=weekO
 // ================= Arranque =================
 await loadRecipes();
 await loadMembers();
+await loadMyProfile();
 try{ markedTotal = await shoppingApi.countMarkedDays(family.id); }catch(e){ markedTotal = 0; }
 await renderWeek();
 </script>
