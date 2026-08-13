@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <title>Semanario V2 · vista semana + editor (mockup)</title>
 <style>
 :root{
@@ -13,7 +15,7 @@
   --shadow:0 4px 18px rgba(30,20,10,.10);
   --font: ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
-*{box-sizing:border-box} html,body{margin:0}
+*{box-sizing:border-box} html,body{margin:0} html{overflow-x:hidden}
 body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -140px,#ffe9dd,transparent 70%),var(--bg);
   color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased; padding-bottom:50px}
 .wrap{max-width:440px; margin:0 auto; padding:0 14px}
@@ -104,7 +106,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .x-btn{border:none; background:rgba(255,255,255,.2); width:30px; height:30px; border-radius:50%; font-size:18px; cursor:pointer; color:#fff; flex:none}
 .x-btn:hover{background:rgba(255,255,255,.32)}
 
-.ed-body{padding:12px 16px; overflow:auto}
+.ed-body{padding:12px 16px; overflow-y:auto; overflow-x:hidden}
 .sec-head{display:flex; align-items:center; gap:8px; margin:12px 2px 8px}
 .sec-head:first-child{margin-top:2px}
 .sec-head .ic{font-size:16px} .sec-head h3{margin:0; font-size:14px; font-weight:800} .sec-head .spacer{flex:1}
@@ -112,7 +114,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .mini-link:hover{background:#fff2ea}
 
 .dish{position:relative; margin-bottom:8px}
-.dish-row{display:flex; align-items:center; gap:8px; background:#fafafb; border:1.5px solid var(--line); border-radius:12px; padding:4px 6px 4px 12px; transition:border-color .15s, box-shadow .15s}
+.dish-row{position:relative; display:flex; align-items:center; gap:8px; background:#fafafb; border:1.5px solid var(--line); border-radius:12px; padding:4px 6px 4px 12px; transition:border-color .15s, box-shadow .15s}
 .dish-row:focus-within{border-color:var(--orange); box-shadow:0 0 0 3px #ffdcca}
 .dish-row.linked{background:#fff}
 .dish .badge-n{font-size:10px; font-weight:800; color:var(--muted); flex:none; width:16px}
@@ -121,7 +123,24 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .btn-ic{flex:none; border:none; border-radius:9px; width:32px; height:32px; cursor:pointer; font-size:14px; display:grid; place-items:center; font-family:inherit}
 .btn-book{background:#e6f6f3; color:#1f7a6e} .btn-book:hover{background:#d3efe9} .btn-book[hidden]{display:none}
 .btn-x{background:#f2f2f4; color:#9a9aa2} .btn-x:hover{background:#eaeaee; color:#e0563c}
-.linked-tags{display:flex; gap:6px; margin:5px 0 0 24px; flex-wrap:wrap}
+.linked-tags{display:flex; gap:6px; margin:0 0 7px 2px; flex-wrap:wrap}
+.dish-line{display:flex; align-items:center; gap:12px; flex-wrap:nowrap; padding-top:8px}
+.dish-meta{display:inline-flex; align-items:center; gap:6px; flex:none; padding:0 2px}
+.m-season{font-size:13px; line-height:1}
+.m-season.verano{color:#ff8c42} .m-season.invierno{color:#4f9bd6} .m-season.anual{color:#b6b6bf}
+.m-time{font-size:10.5px; font-weight:800; color:#6a5aa8; background:#f0eef7; padding:2px 5px; border-radius:6px; white-space:nowrap}
+.m-diff{width:10px; height:10px; border-radius:50%; flex:none; box-shadow:0 0 0 2px #fff}
+.m-diff.facil{background:#2a9d8f} .m-diff.media{background:#d69412} .m-diff.dificil{background:#d9634e}
+.dish-line .dish-row{flex:1 1 auto; min-width:0}
+.side-add{flex:none; border:1.5px dashed #d9c2ef; background:#f7f0ff; color:#7a4fb0; font-family:inherit; font-weight:800; font-size:12px; padding:9px 11px; border-radius:11px; cursor:pointer; white-space:nowrap}
+.side-add:hover{background:#efe4ff}
+.side-plato{position:relative; flex:0 1 auto; display:inline-flex; align-items:center; gap:6px; background:#f1e9fb; border:1.5px solid #e3d3f7; border-radius:11px; padding:8px 10px; min-width:0}
+.side-plato .sp-name{font-weight:700; font-size:12.5px; color:#6a3fa0; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; max-width:130px}
+.side-plato .sp-book{border:none; background:transparent; cursor:pointer; font-size:13px; padding:0 2px; line-height:1}
+.dish-rm, .side-plato .sp-rm{position:absolute; top:-6px; right:-5px; width:20px; height:20px; border-radius:50%; background:#fff; color:#c0392b; font-weight:800; font-size:15px; line-height:1; cursor:pointer; display:grid; place-items:center; box-shadow:0 1px 5px rgba(0,0,0,.2); z-index:3; padding:0; border:1.5px solid #eaeaee}
+.side-plato .sp-rm{border-color:#e3d3f7}
+.dish-rm:hover, .side-plato .sp-rm:hover{background:#fdecea}
+.side-plato .sp-rm:hover{background:#fdecea}
 .garnish{margin:6px 0 0 24px; position:relative}
 .garnish-add{border:1.5px dashed #d9c2ef; background:#f7f0ff; color:#7a4fb0; font-family:inherit; font-weight:800; font-size:12px; padding:6px 10px; border-radius:9px; cursor:pointer}
 .garnish-add:hover{background:#efe4ff}
@@ -281,10 +300,10 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
     </div>
     <div class="ed-body">
       <div class="sec-head"><span class="ic">☀️</span><h3>Comida</h3><span class="spacer"></span>
-        <button class="mini-link" id="unicoComida">Plato único</button><button class="mini-link" id="addComida">＋ Plato</button></div>
+        <button class="mini-link" id="addComida">＋ Plato</button></div>
       <div id="comidaList"></div>
       <div class="sec-head"><span class="ic">🌙</span><h3>Cena</h3><span class="spacer"></span>
-        <button class="mini-link" id="unicoCena">Dos platos</button><button class="mini-link" id="addCena">＋ Plato</button></div>
+        <button class="mini-link" id="addCena">＋ Plato</button></div>
       <div id="cenaList"></div>
       <div class="sec-head"><span class="ic">📌</span><h3>Eventos</h3><span class="spacer"></span><button class="mini-link" id="addEvent">＋ Evento</button></div>
       <ul class="ev-edit" id="eventEditList"></ul>
@@ -405,6 +424,19 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 <script type="module">
 import { auth, families as familiesApi, recipes as recipesApi, week as weekApi, events as eventsApi, shopping as shoppingApi, iso, addDays, mondayOf } from './supabase-client.js';
 
+// --- Auto-actualización: si hay una versión más nueva publicada, recarga sin caché ---
+const APP_VERSION='v9';
+try{
+  const _r=await fetch('version.txt?ts='+Date.now(),{cache:'no-store'});
+  if(_r.ok){
+    const _latest=(await _r.text()).trim();
+    if(_latest && _latest!==APP_VERSION && !location.search.includes('reloaded')){
+      location.replace(location.pathname+'?reloaded='+Date.now());
+      await new Promise(()=>{}); // detener el resto mientras recarga
+    }
+  }
+}catch(e){}
+
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):'';
@@ -507,8 +539,6 @@ function openEditor(day){
   $('#edL').textContent=day.l;
   $('#edD').innerHTML=day.nombre;
   syncCartSwitch();
-  $('#unicoComida').textContent=day.comida.length>1?'Plato único':'Dos platos';
-  $('#unicoCena').textContent=day.cena.length>1?'Plato único':'Dos platos';
   renderDishes(); renderEventEdit();
   $('#editorModal').hidden=false;
 }
@@ -539,46 +569,54 @@ function renderDishList(key,container){
   container.innerHTML='';
   current[key].forEach((dish,i)=>{
     const rec=dish.rid?byId(dish.rid):null;
+    const hasSide=dish.side_rid||dish.side_text;
+    const sname=hasSide?(dish.side_rid?(byId(dish.side_rid)?.nombre||'guarnición'):dish.side_text):'';
     const wrap=document.createElement('div'); wrap.className='dish';
+
+    let sideHtml='';
+    if(dish.texto && dish.id){
+      if(hasSide){
+        sideHtml=`<div class="side-plato">🥗 <span class="sp-name" title="Ver guarnición">${esc(sname)}</span>${dish.side_rid?`<button class="sp-book" title="Ver receta">📖</button>`:''}<button class="sp-rm" title="Quitar guarnición">−</button></div>`;
+      } else if(!dish._addingSide){
+        sideHtml=`<button class="side-add">＋ guarnición</button>`;
+      }
+    }
+
     wrap.innerHTML=`
-      <div class="dish-row ${rec?'linked':''}">
-        <span class="badge-n">${i+1}º</span>
-        <input type="text" value="${esc(dish.texto)}" placeholder="¿Qué plato? Escribe para buscar…" autocomplete="off" spellcheck="false">
-        <button class="btn-ic btn-book" title="Ver receta" ${rec?'':'hidden'}>📖</button>
-        ${current[key].length>1?`<button class="btn-ic btn-x" title="Quitar plato">×</button>`:''}
+      <div class="dish-line">
+        <div class="dish-row ${rec?'linked':''}">
+          <span class="badge-n">${i+1}º</span>
+          <input type="text" value="${esc(dish.texto)}" placeholder="¿Qué plato? Escribe para buscar…" autocomplete="off" spellcheck="false">
+          <button class="btn-ic btn-book" title="Ver receta" ${rec?'':'hidden'}>📖</button>
+          ${current[key].length>1?`<button class="dish-rm" title="Quitar plato">−</button>`:''}
+        </div>
+        ${sideHtml}
       </div>
-      ${rec?`<div class="linked-tags"><span class="pill season ${seasonClass(rec.temporada)}">${seasonLabel(rec.temporada)}</span>${rec.tiempo?`<span class="pill time">⏱ ${rec.tiempo} min</span>`:''}${rec.dificultad?`<span class="pill diff">${cap(rec.dificultad)}</span>`:''}</div>`:''}
+      ${dish._addingSide?`<div class="garnish adding"><input class="ginput" type="text" placeholder="Buscar guarnición…" autocomplete="off" spellcheck="false"><div class="gdrop" hidden></div></div>`:''}
       <div class="drop" hidden></div>`;
-    const input=wrap.querySelector('input'),drop=wrap.querySelector('.drop'),book=wrap.querySelector('.btn-book'),del=wrap.querySelector('.btn-x');
+
+    const input=wrap.querySelector('.dish-row input'),drop=wrap.querySelector('.drop'),book=wrap.querySelector('.btn-book'),del=wrap.querySelector('.dish-rm');
     input.addEventListener('focus',()=>openDrop(key,i,input,drop));
     input.addEventListener('input',()=>{dish.texto=input.value;openDrop(key,i,input,drop);});
     input.addEventListener('change',()=>{ if(!dish.rid) commitFree(key,i,input.value); });
     input.addEventListener('blur',()=>setTimeout(()=>drop.hidden=true,150));
     if(book)book.addEventListener('click',()=>{if(dish.rid)openRecipe(dish.rid);});
     if(del)del.addEventListener('click',()=>removeDish(key,i));
-    // --- Guarnición ---
-    if(dish.texto && dish.id){
-      const g=document.createElement('div');
-      if(dish.side_rid || dish.side_text){
-        g.className='garnish';
-        const sname=dish.side_rid?(byId(dish.side_rid)?.nombre||'guarnición'):dish.side_text;
-        g.innerHTML=`<span class="garnish-chip" title="Ver guarnición">🥗 con ${esc(sname)}</span><button class="garnish-rm" title="Quitar guarnición">×</button>`;
-        if(dish.side_rid) g.querySelector('.garnish-chip').addEventListener('click',()=>openRecipe(dish.side_rid));
-        g.querySelector('.garnish-rm').addEventListener('click',()=>setSide(key,i,null));
-      } else if(dish._addingSide){
-        g.className='garnish adding';
-        g.innerHTML=`<input class="ginput" type="text" placeholder="Buscar guarnición…" autocomplete="off" spellcheck="false"><div class="gdrop" hidden></div>`;
-        const gi=g.querySelector('.ginput'), gd=g.querySelector('.gdrop');
-        gi.addEventListener('focus',()=>openGarnishDrop(key,i,gi,gd));
-        gi.addEventListener('input',()=>openGarnishDrop(key,i,gi,gd));
-        gi.addEventListener('blur',()=>setTimeout(()=>{gd.hidden=true; dish._addingSide=false;},150));
-        setTimeout(()=>gi.focus(),0);
-      } else {
-        g.className='garnish';
-        g.innerHTML=`<button class="garnish-add">＋ guarnición</button>`;
-        g.querySelector('.garnish-add').addEventListener('click',()=>{ dish._addingSide=true; renderDishes(); });
-      }
-      wrap.appendChild(g);
+
+    const sideAdd=wrap.querySelector('.side-add');
+    if(sideAdd) sideAdd.addEventListener('click',()=>{ dish._addingSide=true; renderDishes(); });
+    if(dish.side_rid){
+      wrap.querySelector('.sp-name')?.addEventListener('click',()=>openRecipe(dish.side_rid));
+      wrap.querySelector('.sp-book')?.addEventListener('click',()=>openRecipe(dish.side_rid));
+    }
+    wrap.querySelector('.sp-rm')?.addEventListener('click',()=>setSide(key,i,null));
+
+    const gi=wrap.querySelector('.ginput');
+    if(gi){ const gd=wrap.querySelector('.gdrop');
+      gi.addEventListener('focus',()=>openGarnishDrop(key,i,gi,gd));
+      gi.addEventListener('input',()=>openGarnishDrop(key,i,gi,gd));
+      gi.addEventListener('blur',()=>setTimeout(()=>{gd.hidden=true; dish._addingSide=false; renderDishes();},150));
+      setTimeout(()=>gi.focus(),0);
     }
     container.appendChild(wrap);
   });
@@ -855,8 +893,6 @@ $('#addName').addEventListener('keydown',e=>{ if(e.key==='Enter') addManualItem(
 $('#cartSwitch').addEventListener('click',async()=>{ current.cart=!current.cart; syncCartSwitch(); markedTotal+=current.cart?1:-1; setBadge(); try{ await weekApi.setDayShopping(family.id,current.date,current.cart);}catch(e){toast(e.message);} });
 $('#addComida').addEventListener('click',()=>{if(current.comida.length<4){current.comida.push({id:null,rid:null,texto:''});renderDishes();}});
 $('#addCena').addEventListener('click',()=>{if(current.cena.length<4){current.cena.push({id:null,rid:null,texto:''});renderDishes();}});
-$('#unicoComida').addEventListener('click',async function(){ if(current.comida.length>1){ const extra=current.comida.slice(1); for(const d of extra){ if(d.id) try{await weekApi.removeDish(d.id);}catch(e){} } current.comida=[current.comida[0]]; this.textContent='Dos platos'; } else { current.comida.push({id:null,rid:null,texto:''}); this.textContent='Plato único'; } renderDishes(); });
-$('#unicoCena').addEventListener('click',async function(){ if(current.cena.length>1){ const extra=current.cena.slice(1); for(const d of extra){ if(d.id) try{await weekApi.removeDish(d.id);}catch(e){} } current.cena=[current.cena[0]]; this.textContent='Dos platos'; } else { current.cena.push({id:null,rid:null,texto:''}); this.textContent='Plato único'; } renderDishes(); });
 $('#addEvent').addEventListener('click',()=>openEventForm(current.date));
 $('#evRecurring').addEventListener('change',function(){ $('#evWeekdaysField').style.display=this.checked?'block':'none'; });
 $('#evSave').addEventListener('click',saveEvent);
