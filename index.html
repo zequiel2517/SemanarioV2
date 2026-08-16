@@ -8,7 +8,7 @@
 <title>Semanario V2 · vista semana + editor (mockup)</title>
 <style>
 :root{
-  --orange:#ff6b35; --orange-dark:#e85a28;
+  --orange:#16a596; --orange-dark:#0e857a;
   --bg:#f2f2f4; --card:#fff; --ink:#2b2b30; --muted:#8a8a94; --line:#ececf0;
   --sun-bg:#fff3e6; --sun-bd:#ffd4a8; --moon-bg:#eef5ff; --moon-bd:#b8daff;
   --verano:#ff8c42; --invierno:#4f9bd6; --anual:#2a9d8f; --media:#d69412;
@@ -52,6 +52,11 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .tb-actions{display:flex; align-items:center; gap:8px; flex:none}
 .nav{display:flex; gap:5px}
 .nav button{border:none; background:rgba(255,255,255,.18); color:#fff; width:30px; height:30px; border-radius:9px; font-size:15px; cursor:pointer; font-family:inherit}
+.cart-pill{display:inline-flex; align-items:center; gap:7px; background:#fff; border-radius:999px; padding:6px 10px; box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.cp-cart{border:none; background:transparent; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; font-size:15px; padding:0; color:var(--ink)}
+.cp-cart .count{background:var(--orange); color:#fff; font-size:11px; font-weight:800; min-width:20px; height:20px; border-radius:999px; display:grid; place-items:center; padding:0 5px}
+.cp-sep{width:1px; height:20px; background:#e6e6ea; flex:none}
+.cp-trash{border:none; background:transparent; cursor:pointer; font-size:15px; padding:0; line-height:1}
 .compra-btn{position:relative; border:none; cursor:pointer; font-family:inherit; background:rgba(255,255,255,.2);
   color:#fff; font-weight:800; font-size:13px; padding:10px 12px; border-radius:12px; display:flex; align-items:center; gap:7px}
 .compra-btn:hover{background:rgba(255,255,255,.3)}
@@ -64,31 +69,34 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 @keyframes inR{from{opacity:0; transform:translateX(26px)}to{opacity:1; transform:none}}
 @keyframes inL{from{opacity:0; transform:translateX(-26px)}to{opacity:1; transform:none}}
 #weekLabel{cursor:pointer}
-.day-card{display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); border-radius:14px; overflow:hidden;
-  box-shadow:var(--shadow); background:#fff; cursor:pointer; border:2px solid transparent; transition:transform .1s, border-color .15s}
+.day-card{position:relative; display:grid; grid-template-columns:minmax(0,1.55fr) minmax(0,1fr); border-radius:16px; overflow:hidden;
+  box-shadow:var(--shadow); background:#fff; cursor:pointer; transition:transform .1s}
 .day-card:hover{transform:translateY(-1px)}
-.day-card.marked{border-color:#bfe8cd}
-.dc-hl{background:var(--orange); color:#fff; padding:7px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0; overflow:hidden}
-.dc-hr{background:var(--orange); color:#fff; padding:7px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px; border-left:1px solid rgba(255,255,255,.35); min-width:0; overflow:hidden}
-.dcd{display:flex; align-items:baseline; gap:6px}
-.dcd .l{font-size:19px; font-weight:800}
-.dcd .d{font-size:11px; opacity:.95; text-transform:uppercase; letter-spacing:.3px}
-.dc-cart{display:flex; align-items:center; gap:4px; background:rgba(0,0,0,.18); padding:3px 7px; border-radius:8px; cursor:pointer; font-size:11px}
-.dc-cart input{margin:0; width:13px; height:13px; accent-color:#fff}
-.dc-hr .evlbl{font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.3px}
-.dc-hr .plus{background:rgba(255,255,255,.28); width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:14px; font-weight:700}
-
-.dc-meals{padding:8px; display:flex; flex-direction:column; gap:6px; min-width:0; overflow:hidden}
-.mchip{border-radius:9px; padding:6px 8px; display:flex; align-items:center; gap:6px; overflow:hidden; min-width:0}
-.mchip.sun{background:var(--sun-bg); border:1px solid var(--sun-bd)}
-.mchip.moon{background:var(--moon-bg); border:1px solid var(--moon-bd)}
-.mchip .ic{font-size:13px; flex:none}
-.mchip .book{flex:none; border:none; background:#2a9d8f22; color:#1f7a6e; width:22px; height:22px; border-radius:6px; font-size:11px; cursor:pointer}
-.mchip .book:hover{background:#2a9d8f33}
-.mchip .empty{font-size:11px; color:#c0808a; opacity:.7; font-style:italic}
-
-.dc-events{padding:8px; background:#f7f7f9; max-height:158px; overflow-y:auto; overflow-x:hidden; min-width:0}
-.dc-events .none{font-size:10.5px; color:#c2c2ca; padding:6px 2px}
+.day-card.marked{box-shadow:0 0 0 2px var(--dc) inset, var(--shadow)}
+.dc-band{position:absolute; left:0; top:0; bottom:0; width:112px; background:color-mix(in srgb, var(--dc) 15%, #fff); z-index:0}
+.dc-label{position:absolute; left:13px; top:12px; z-index:3; display:flex; align-items:baseline; gap:6px}
+.dc-label .l{font-size:21px; font-weight:800; color:var(--dc)}
+.dc-label .d{font-size:10px; font-weight:800; color:var(--dc); opacity:.82; text-transform:uppercase; letter-spacing:.3px}
+.dc-cart2{align-self:flex-end; display:inline-flex; align-items:center; background:#fff; border:1px solid #ececf0; border-radius:999px; padding:3px 8px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.dc-cart2 input{margin:0 4px 0 0; width:13px; height:13px; accent-color:var(--dc)}
+.dc-cart2 span{font-size:12px}
+.dc-meals{grid-column:1; position:relative; z-index:1; padding:12px 8px 12px 16px; display:flex; flex-direction:column; gap:8px; min-width:0}
+.dc-tabs{align-self:flex-end; display:inline-flex; background:#eceef0; border-radius:999px; padding:3px; gap:2px}
+.dtab{border:none; background:transparent; width:32px; height:24px; border-radius:999px; cursor:pointer; font-size:12px; display:grid; place-items:center; opacity:.7}
+.dtab.on{background:var(--dc); opacity:1}
+.mrow{display:flex; align-items:center; gap:6px; background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(20,15,10,.13); padding:9px 9px 9px 7px; min-width:0; position:relative; z-index:1}
+.mrow-ic{flex:none; font-size:15px; display:inline-flex; align-items:center}
+.mrow-ic .ic-moon{width:16px; height:16px; display:block}
+.mrow .mq{flex:1; min-width:0}
+.mrow .mq>span{font-size:13px; font-weight:600}
+.mrow-empty{flex:1; min-width:0; font-size:12.5px; font-style:italic; color:var(--dc); opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.mrow-menu{flex:none; border:none; background:transparent; color:#c4c4cc; font-weight:800; cursor:pointer; font-size:15px; padding:0 2px}
+.dc-events{grid-column:2; position:relative; z-index:1; background:#fff; padding:12px 12px 12px 13px; border-left:1px solid #f1f1f4; min-width:0}
+.dc-ev-head{display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:8px}
+.dc-ev-head span{font-size:11px; font-weight:800; letter-spacing:.4px; color:var(--dc)}
+.dc-plus{border:none; background:var(--dc); color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:17px; font-weight:700; display:grid; place-items:center; flex:none; line-height:1}
+.dc-ev-list{display:flex; flex-direction:column; gap:4px; max-height:150px; overflow-y:auto; overflow-x:hidden}
+.dc-none{display:flex; align-items:center; gap:7px; color:#b6b6bf; font-size:12.5px; padding:6px 2px}
 .evrow{display:flex; align-items:stretch; background:#fff; border-radius:7px; box-shadow:0 1px 3px rgba(0,0,0,.05); margin-bottom:4px; min-width:0; overflow:hidden}
 .ev-stripe{display:flex; flex:none}
 .ev-stripe i{width:4px; display:block}
@@ -106,6 +114,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 /* ---------- EDITOR (modal al pinchar una tarjeta) ---------- */
 .backdrop{position:fixed; inset:0; background:rgba(20,15,10,.45); display:grid; place-items:start center; padding:0; z-index:100}
 .backdrop.center{place-items:center; padding:16px}
+#eventModal{padding:10px 12px 0}
 .backdrop[hidden]{display:none}
 .editor{width:100%; max-width:440px; background:var(--card); border-radius:0 0 22px 22px; box-shadow:0 8px 40px rgba(0,0,0,.25);
   max-height:94vh; display:flex; flex-direction:column; animation:up .22s ease}
@@ -228,6 +237,17 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .yt{display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; background:#ff2f2f; color:#fff; font-weight:800; font-size:13.5px; padding:12px; border-radius:12px}
 .shop-note{font-size:12px; color:var(--muted); background:#fff8f4; border:1px solid #ffe1d1; border-radius:10px; padding:9px 11px; margin-bottom:14px; line-height:1.5}
 .shop-days{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px}
+.shop-view{display:inline-flex; background:#eef0f2; border-radius:999px; padding:3px; gap:2px; margin-bottom:14px}
+.sv{border:none; background:transparent; font-family:inherit; font-weight:800; font-size:12.5px; color:#77777f; padding:6px 14px; border-radius:999px; cursor:pointer}
+.sv.on{background:var(--orange); color:#fff}
+.meal-group{margin-bottom:15px}
+.mg-head{font-weight:800; font-size:13.5px; color:var(--ink); display:flex; align-items:center; gap:6px; margin-bottom:2px}
+.mg-dishes{font-size:11.5px; color:var(--muted); margin:0 0 6px 24px}
+.mg-list{list-style:none; margin:0 0 0 24px; padding:0; display:flex; flex-direction:column; gap:3px}
+.mg-list li{font-size:13px; color:var(--ink)}
+.mg-list li .q{color:var(--muted); font-size:12px}
+.mg-items{display:flex; flex-direction:column; gap:2px}
+.mg-empty{color:#b6b6bf; font-size:12.5px; margin-left:2px}
 .reset-btn{border:none; background:rgba(255,255,255,.18); color:#fff; font-family:inherit; font-size:15px; padding:9px 10px; border-radius:11px; cursor:pointer; flex:none}
 .reset-btn:hover{background:rgba(255,255,255,.3)}
 .chip{font-size:11px; font-weight:800; background:#e7f7ec; color:#1f7a4a; padding:5px 10px; border-radius:999px}
@@ -299,8 +319,11 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
       <span class="wk" id="weekLabel" title="Volver a la semana actual">—</span>
     </div>
     <div class="tb-actions">
-      <button class="compra-btn" id="openShop">🛒 <span class="count" id="shopCount">0</span></button>
-      <button class="reset-btn" id="shopReset" title="Vaciar días del carrito (conserva los productos manuales)">🧹</button>
+      <div class="cart-pill">
+        <button class="cp-cart" id="openShop" title="Lista de la compra">🛒<span class="count" id="shopCount">0</span></button>
+        <span class="cp-sep"></span>
+        <button class="cp-trash" id="shopReset" title="Vaciar días del carrito (conserva los productos manuales)">🗑️</button>
+      </div>
     </div>
   </div>
 </div>
@@ -415,7 +438,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 </div>
 
 <!-- Modal formulario de EVENTO -->
-<div class="backdrop center" id="eventModal" hidden>
+<div class="backdrop" id="eventModal" hidden>
   <div class="sheet">
     <div class="sheet-head"><h2 id="evTitle">Nuevo evento</h2><button class="x-dark" id="evClose">×</button></div>
     <div class="sheet-body">
@@ -445,14 +468,18 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
     <div class="sheet-body">
       <div class="shop-note">Junta los ingredientes de <b>todos los días marcados con 🛒</b> (de cualquier semana), sumando lo que se repite. Los básicos de la <b>despensa</b> quedan tachados aparte. Lo que <b>taches</b> no se enviará por WhatsApp.</div>
       <div class="shop-days" id="shopDays"></div>
-      <div class="shop-group"><h4>Para comprar</h4><div id="shopBuy"></div></div>
-      <div class="shop-add">
-        <input id="addName" placeholder="Añadir producto (pan, servilletas…)" autocomplete="off">
-        <input id="addQty" type="number" min="0" step="any" placeholder="Cant.">
-        <select id="addUnit"></select>
-        <button id="addBtn" title="Añadir a la lista">＋</button>
+      <div class="shop-view" id="shopView"><button class="sv on" data-v="all">Todo</button><button class="sv" data-v="meal">Por comidas</button></div>
+      <div id="shopAllView">
+        <div class="shop-group"><h4>Para comprar</h4><div id="shopBuy"></div></div>
+        <div class="shop-add">
+          <input id="addName" placeholder="Añadir producto (pan, servilletas…)" autocomplete="off">
+          <input id="addQty" type="number" min="0" step="any" placeholder="Cant.">
+          <select id="addUnit"></select>
+          <button id="addBtn" title="Añadir a la lista">＋</button>
+        </div>
+        <div class="shop-group pantry"><h4>Ya en tu despensa</h4><div id="shopPantry"></div></div>
       </div>
-      <div class="shop-group pantry"><h4>Ya en tu despensa</h4><div id="shopPantry"></div></div>
+      <div id="shopMealView" hidden></div>
       <a class="wa" id="waBtn" href="#" target="_blank" rel="noopener">Enviar por WhatsApp</a>
     </div>
   </div>
@@ -461,10 +488,8 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { auth, families as familiesApi, profiles as profilesApi, recipes as recipesApi, week as weekApi, events as eventsApi, shopping as shoppingApi, iso, addDays, mondayOf } from './supabase-client.js';
-
 // --- Auto-actualización: si hay una versión más nueva publicada, recarga sin caché ---
-const APP_VERSION='v11';
+const APP_VERSION='v17';
 try{
   const _r=await fetch('version.txt?ts='+Date.now(),{cache:'no-store'});
   if(_r.ok){
@@ -475,6 +500,9 @@ try{
     }
   }
 }catch(e){}
+
+// Importa el cliente con la versión en la URL, para que también se refresque al cambiar
+const { auth, families: familiesApi, profiles: profilesApi, recipes: recipesApi, week: weekApi, events: eventsApi, shopping: shoppingApi, iso, addDays, mondayOf } = await import('./supabase-client.js?v=' + APP_VERSION);
 
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -487,6 +515,9 @@ function flashSaved(){const el=document.querySelector('.saved-chip');if(!el)retu
 const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const MESL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DOW=['L','M','X','J','V','S','D'];
+const DOWFULL=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const DAYCOL=['#37a06a','#2a9d8f','#e8890c','#e23b3b','#2f7fe0','#8a4fbf','#e23b8f'];
+const MOON='<svg viewBox="0 0 24 24" class="ic-moon"><path fill="#2f7fe0" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
 const DOWNAME=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const UNITS=['ud','g','kg','ml','l','cucharadita','cucharada','chorrito','vaso','diente','pizca','puñado','manojo','loncha','lomos','bote','brick','bolsa','paquete','lata','hoja'];
 const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
@@ -534,22 +565,25 @@ async function renderWeek(dir){
   try{ if(!cache[weekOffset]) wk.innerHTML='<p style="padding:24px;text-align:center;color:#8a8a94">Cargando…</p>'; days=await getWeek(weekOffset); }
   catch(e){ wk.innerHTML=''; toast('Error cargando la semana: '+e.message); return; }
   wk.innerHTML='';
-  days.forEach(d=>{
+  days.forEach((d,i)=>{
     const card=document.createElement('div');
     card.className='day-card'+(d.cart?' marked':'');
+    card.style.setProperty('--dc', DAYCOL[i%7]);
     card.innerHTML=`
-      <div class="dc-hl">
-        <div class="dcd"><span class="l">${d.l}</span><span class="d">${d.fecha}</span></div>
-        <label class="dc-cart"><input type="checkbox" ${d.cart?'checked':''}><span>🛒</span></label>
+      <div class="dc-band"></div>
+      <div class="dc-label"><span class="l">${d.l}</span><span class="d">${d.fecha}</span></div>
+      <div class="dc-meals">
+        <label class="dc-cart2" title="Marcar día para la compra"><input type="checkbox" ${d.cart?'checked':''}><span>🛒</span></label>
+        ${mealRow('☀️',d.comida)}${mealRow(MOON,d.cena)}
       </div>
-      <div class="dc-hr"><span class="evlbl">Eventos</span><span class="plus">+</span></div>
-      <div class="dc-meals">${mealChip('sun','☀️',d.comida)}${mealChip('moon','🌙',d.cena)}</div>
-      <div class="dc-events">${d.eventos.length?d.eventos.map(evRowHtml).join(''):'<div class="none">Sin eventos</div>'}</div>`;
-    const cb=card.querySelector('.dc-cart input');
-    card.querySelector('.dc-cart').addEventListener('click',e=>e.stopPropagation());
+      <div class="dc-events">
+        <div class="dc-ev-head"><span>EVENTOS</span><button class="dc-plus" title="Añadir evento">＋</button></div>
+        <div class="dc-ev-list">${d.eventos.length?d.eventos.map(evRowHtml).join(''):'<div class="dc-none">Sin eventos</div>'}</div>
+      </div>`;
+    card.querySelector('.dc-cart2').addEventListener('click',e=>e.stopPropagation());
+    const cb=card.querySelector('.dc-cart2 input');
     cb.addEventListener('change',async()=>{ d.cart=cb.checked; card.classList.toggle('marked',d.cart); markedTotal+=cb.checked?1:-1; setBadge(); try{ await weekApi.setDayShopping(family.id,d.date,d.cart);}catch(err){toast(err.message);} });
-    card.querySelectorAll('.book').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openRecipe(b.dataset.rid);}));
-    card.querySelector('.dc-hr .plus')?.addEventListener('click',e=>{e.stopPropagation();openEventForm(d.date);});
+    card.querySelector('.dc-plus').addEventListener('click',e=>{e.stopPropagation();openEventForm(d.date);});
     card.addEventListener('click',()=>openEditor(d));
     wk.appendChild(card);
   });
@@ -560,14 +594,11 @@ async function renderWeek(dir){
 }
 function sideName(dish){ return dish.side_rid ? (byId(dish.side_rid)?.nombre||'guarnición') : (dish.side_text||''); }
 function dishDisplay(dish){ const s=sideName(dish); return dish.texto + (s?` con ${s}`:''); }
-function mealChip(cls,icon,dishes){
+function mealRow(icon,dishes){
   const named=dishes.filter(x=>x.texto);
-  if(!named.length) return `<div class="mchip ${cls}"><span class="ic">${icon}</span><span class="empty">Sin plato — toca para añadir</span></div>`;
+  if(!named.length) return `<div class="mrow empty"><span class="mrow-ic">${icon}</span><span class="mrow-empty">Sin plato — toca para añadir</span></div>`;
   const text=named.map(dishDisplay).join(' · ');
-  const books=[];
-  named.forEach(x=>{ if(x.rid) books.push([x.rid,x.texto]); if(x.side_rid) books.push([x.side_rid,sideName(x)]); });
-  const booksHtml=books.map(([rid,nm])=>`<button class="book" data-rid="${rid}" title="Ver receta: ${esc(nm)}">📖</button>`).join('');
-  return `<div class="mchip ${cls}"><span class="ic">${icon}</span>${mq(text)}${booksHtml}</div>`;
+  return `<div class="mrow"><span class="mrow-ic">${icon}</span>${mq(text)}</div>`;
 }
 let markedTotal=0;
 function setBadge(){ $('#shopCount').textContent=markedTotal; }
@@ -878,27 +909,81 @@ let shopState=null;
 async function openShop(){
   try{
     const res=await shoppingApi.generate(family.id);
-    shopState={ days:res.days, buy:res.buy.map(x=>({...x, checked:false})), pantry:res.pantry.slice() };
+    shopState={ days:res.days, buy:res.buy.map(x=>({...x})), pantry:res.pantry.slice(), view:'all', byMeal:null, checked:new Set() };
     renderShop();
+    $('#shopView').querySelectorAll('.sv').forEach(b=>b.classList.toggle('on',b.dataset.v==='all'));
+    $('#shopAllView').hidden=false; $('#shopMealView').hidden=true;
     $('#shopModal').hidden=false;
   }catch(e){ toast('No pude generar la compra: '+e.message); }
 }
-function updateWa(){ $('#waBtn').href=shoppingApi.whatsappUrl({ buy: shopState.buy.filter(x=>!x.checked) }); }
+async function setShopView(v){
+  if(!shopState) return;
+  shopState.view=v;
+  $('#shopView').querySelectorAll('.sv').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  $('#shopAllView').hidden = v!=='all';
+  $('#shopMealView').hidden = v!=='meal';
+  if(v==='meal'){
+    if(!shopState.byMeal){ try{ shopState.byMeal=await shoppingApi.byMeal(family.id); }catch(e){ shopState.byMeal=[]; toast('No pude agrupar: '+e.message); } }
+    renderMealView();
+  }
+}
+function renderMealView(){
+  const s=shopState;
+  const groups=s.byMeal||[];
+  const itemRow=(it,extra='')=>{const k=itemKey(it);const ch=s.checked.has(k);return `<label class="shop-item${ch?' have':''}"><input type="checkbox" data-k="${encodeURIComponent(k)}" ${ch?'checked':''}><span class="nm">${esc(it.name)}</span><span class="q">${it.quantity?fmt(it.quantity):''} ${it.unit||''}</span>${extra}</label>`;};
+  let html='';
+  if(!groups.length){ html='<p style="color:#b6b6bf;font-size:13px">No hay comidas con ingredientes en los días marcados.</p>'; }
+  else html=groups.map(g=>{
+    const d=new Date(g.day+'T00:00:00');
+    const label=`${DOWFULL[(d.getDay()+6)%7]} ${d.getDate()} · ${g.slot==='lunch'?'Comida':'Cena'}`;
+    const buyItems=g.items.filter(it=>!it.basic);
+    const rows=buyItems.length?buyItems.map(it=>itemRow(it)).join(''):'<div class="mg-empty">Solo básicos de despensa</div>';
+    const dishes=g.dishes.length?`<div class="mg-dishes">${esc(g.dishes.join(' · '))}</div>`:'';
+    return `<div class="meal-group"><div class="mg-head">${g.slot==='lunch'?'☀️':'🌙'} ${label}</div>${dishes}<div class="mg-items">${rows}</div></div>`;
+  }).join('');
+  const manual=s.buy.filter(x=>x.manual);
+  if(manual.length){
+    const rows=manual.map(x=>itemRow(x,`<button class="rm-item" data-id="${x.id}" title="Quitar">×</button>`)).join('');
+    html+=`<div class="meal-group"><div class="mg-head">🛒 Añadidos a mano</div><div class="mg-items">${rows}</div></div>`;
+  }
+  if(s.pantry.length){
+    const prows=s.pantry.map((x,i)=>`<label class="shop-item"><input type="checkbox" data-pi="${i}" checked><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join('');
+    html+=`<div class="meal-group"><div class="mg-head">🧂 Productos básicos <span class="mg-dishes" style="margin:0">— ya en tu despensa</span></div><div class="mg-items">${prows}</div></div>`;
+  }
+  $('#shopMealView').innerHTML=html;
+  const boxes=$('#shopMealView').querySelectorAll('input[data-k]');
+  boxes.forEach(cb=>cb.addEventListener('change',()=>{
+    const k=decodeURIComponent(cb.dataset.k);
+    if(cb.checked) s.checked.add(k); else s.checked.delete(k);
+    boxes.forEach(o=>{ if(decodeURIComponent(o.dataset.k)===k){ o.checked=cb.checked; o.closest('.shop-item').classList.toggle('have',cb.checked);} });
+    updateWa();
+  }));
+  $('#shopMealView').querySelectorAll('input[data-pi]').forEach(cb=>cb.addEventListener('change',()=>{
+    if(!cb.checked){ const i=+cb.dataset.pi; const item=s.pantry.splice(i,1)[0]; if(item){ s.buy.push(item); renderShop(); renderMealView(); } }
+  }));
+  $('#shopMealView').querySelectorAll('.rm-item').forEach(b=>b.addEventListener('click',async e=>{
+    e.preventDefault(); e.stopPropagation();
+    try{ await shoppingApi.removeManual(b.dataset.id); s.buy=s.buy.filter(x=>x.id!==b.dataset.id); renderMealView(); }
+    catch(err){ toast(err.message); }
+  }));
+}
+function itemKey(x){ return (x.name||'').trim().toLowerCase()+'|'+(x.unit||''); }
+function updateWa(){ $('#waBtn').href=shoppingApi.whatsappUrl({ buy: shopState.buy.filter(x=>!shopState.checked.has(itemKey(x))) }); }
 function renderShop(){
   const s=shopState;
   $('#shopSub').textContent=`${s.days.length} días · ${s.buy.length} productos`;
   $('#shopDays').innerHTML=s.days.length?s.days.map(dISO=>{const d=new Date(dISO+'T00:00:00');return `<span class="chip">${DOW[(d.getDay()+6)%7]} · ${d.getDate()} ${MES[d.getMonth()]}</span>`;}).join(''):'<span style="color:#b6b6bf;font-size:13px">Ningún día marcado con 🛒</span>';
-  $('#shopBuy').innerHTML=s.buy.length?s.buy.map((x,i)=>`<label class="shop-item${x.checked?' have':''}"><input type="checkbox" data-i="${i}" ${x.checked?'checked':''}><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span>${x.manual?`<button class="rm-item" data-id="${x.id}" title="Quitar">×</button>`:''}</label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada que comprar. Marca días con 🛒, añade recetas con ingredientes, o mete productos con ＋.</p>';
+  $('#shopBuy').innerHTML=s.buy.length?s.buy.map((x,i)=>{const ch=s.checked.has(itemKey(x));return `<label class="shop-item${ch?' have':''}"><input type="checkbox" data-i="${i}" ${ch?'checked':''}><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span>${x.manual?`<button class="rm-item" data-id="${x.id}" title="Quitar">×</button>`:''}</label>`;}).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada que comprar. Marca días con 🛒, añade recetas con ingredientes, o mete productos con ＋.</p>';
   $('#shopPantry').innerHTML=s.pantry.length?s.pantry.map((x,i)=>`<label class="shop-item"><input type="checkbox" data-i="${i}" checked><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada en la despensa.</p>';
   updateWa();
-  $('#shopBuy').querySelectorAll('input[type=checkbox]').forEach(cb=>cb.addEventListener('change',()=>{ const i=+cb.dataset.i; s.buy[i].checked=cb.checked; cb.closest('.shop-item').classList.toggle('have',cb.checked); updateWa(); }));
+  $('#shopBuy').querySelectorAll('input[type=checkbox]').forEach(cb=>cb.addEventListener('change',()=>{ const x=s.buy[+cb.dataset.i]; const k=itemKey(x); if(cb.checked) s.checked.add(k); else s.checked.delete(k); cb.closest('.shop-item').classList.toggle('have',cb.checked); updateWa(); }));
   $('#shopBuy').querySelectorAll('.rm-item').forEach(b=>b.addEventListener('click',async e=>{
     e.preventDefault(); e.stopPropagation();
     try{ await shoppingApi.removeManual(b.dataset.id); s.buy=s.buy.filter(x=>x.id!==b.dataset.id); renderShop(); }
     catch(err){ toast(err.message); }
   }));
   $('#shopPantry').querySelectorAll('input').forEach(cb=>cb.addEventListener('change',()=>{
-    if(!cb.checked){ const i=+cb.dataset.i; const item=s.pantry.splice(i,1)[0]; if(item){ item.checked=false; s.buy.push(item); renderShop(); } }
+    if(!cb.checked){ const i=+cb.dataset.i; const item=s.pantry.splice(i,1)[0]; if(item){ s.buy.push(item); renderShop(); } }
   }));
 }
 async function addManualItem(){
@@ -907,9 +992,10 @@ async function addManualItem(){
   const q=parseFloat($('#addQty').value); const unit=$('#addUnit').value;
   try{
     const row=await shoppingApi.addManual(family.id, name, isNaN(q)?null:q, unit);
-    shopState.buy.push({id:row.id, name, quantity:isNaN(q)?null:q, unit, manual:true, checked:false});
+    shopState.buy.push({id:row.id, name, quantity:isNaN(q)?null:q, unit, manual:true});
     $('#addName').value=''; $('#addQty').value=''; $('#addName').focus();
     renderShop();
+    if(shopState.view==='meal') renderMealView();
   }catch(e){ toast('No pude añadir: '+e.message); }
 }
 async function resetShoppingDays(){
@@ -937,6 +1023,7 @@ $('#openShop').addEventListener('click',openShop);
 // Fila de "añadir producto" a la compra
 $('#addUnit').innerHTML='<option value=""></option>'+UNITS.map(u=>`<option>${u}</option>`).join('');
 $('#addBtn').addEventListener('click',addManualItem);
+$('#shopView').querySelectorAll('.sv').forEach(b=>b.addEventListener('click',()=>setShopView(b.dataset.v)));
 $('#shopReset').addEventListener('click',resetShoppingDays);
 $('#addName').addEventListener('keydown',e=>{ if(e.key==='Enter') addManualItem(); });
 $('#cartSwitch').addEventListener('click',async()=>{ current.cart=!current.cart; syncCartSwitch(); markedTotal+=current.cart?1:-1; setBadge(); try{ await weekApi.setDayShopping(family.id,current.date,current.cart);}catch(e){toast(e.message);} });

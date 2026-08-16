@@ -336,11 +336,56 @@ export const shopping = {
     if (error) throw error;
   },
 
-  // Genera el texto para el enlace de WhatsApp (wa.me). Recibe solo lo que se debe comprar.
+  // Texto para WhatsApp: solo los productos, uno por línea, sin viñetas ni título.
   whatsappUrl({ buy }) {
-    const txt = '🛒 Lista de la compra\n\n'
-      + buy.map(x => `• ${x.name}${x.quantity ? ` — ${x.quantity} ${x.unit}` : ''}`).join('\n');
+    const txt = buy.map(x => (x.quantity ? `${x.name} ${x.quantity} ${x.unit}` : x.name).trim()).join('\n');
     return 'https://wa.me/?text=' + encodeURIComponent(txt);
+  },
+
+  // Compra desglosada por comida (día + almuerzo/cena) de los días marcados
+  async byMeal(familyId) {
+    const [{ data: plans }, { data: pantry }, { data: basics }] = await Promise.all([
+      supabase.from('plan_days').select('day').eq('family_id', familyId).eq('include_in_shopping', true).order('day'),
+      supabase.from('pantry_items').select('name').eq('family_id', familyId),
+      supabase.from('ingredients').select('name').eq('is_basic', true),
+    ]);
+    const days = (plans || []).map(p => p.day);
+    if (!days.length) return [];
+    const basicSet = new Set([...(pantry || []), ...(basics || [])].map(x => x.name.trim().toLowerCase()));
+
+    const { data: dishes } = await supabase.from('dishes')
+      .select('day, slot, position, recipe_id, side_recipe_id, free_text, recipes!recipe_id(title)')
+      .eq('family_id', familyId).in('day', days).order('position');
+
+    const rids = new Set();
+    for (const d of (dishes || [])) { if (d.recipe_id) rids.add(d.recipe_id); if (d.side_recipe_id) rids.add(d.side_recipe_id); }
+    const byRecipe = new Map();
+    if (rids.size) {
+      const { data: ris } = await supabase.from('recipe_ingredients')
+        .select('recipe_id, name, quantity, unit, ingredient_id').in('recipe_id', [...rids]);
+      for (const ri of (ris || [])) { const a = byRecipe.get(ri.recipe_id) || []; a.push(ri); byRecipe.set(ri.recipe_id, a); }
+    }
+
+    const groups = new Map();
+    for (const d of (dishes || [])) {
+      const key = d.day + '|' + d.slot;
+      let g = groups.get(key);
+      if (!g) { g = { day: d.day, slot: d.slot, dishes: [], items: new Map() }; groups.set(key, g); }
+      const mainName = d.recipes?.title || d.free_text || '';
+      if (mainName) g.dishes.push(mainName);
+      for (const rid of [d.recipe_id, d.side_recipe_id]) {
+        if (!rid) continue;
+        for (const ing of (byRecipe.get(rid) || [])) {
+          const k = (ing.ingredient_id || ing.name.trim().toLowerCase()) + '|' + (ing.unit || '');
+          const cur = g.items.get(k) || { name: ing.name, unit: ing.unit || '', quantity: 0, basic: basicSet.has(ing.name.trim().toLowerCase()) };
+          cur.quantity += Number(ing.quantity) || 0;
+          g.items.set(k, cur);
+        }
+      }
+    }
+    const arr = [...groups.values()].map(g => ({ day: g.day, slot: g.slot, dishes: g.dishes, items: [...g.items.values()] }));
+    arr.sort((a, b) => a.day.localeCompare(b.day) || ((a.slot === 'lunch' ? 0 : 1) - (b.slot === 'lunch' ? 0 : 1)));
+    return arr;
   },
 };
 
