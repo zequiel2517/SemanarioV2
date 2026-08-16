@@ -33,8 +33,16 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .ev-dots{display:inline-flex; gap:2px; vertical-align:middle}
 .ev-dot{width:8px; height:8px; border-radius:50%; display:inline-block}
 .color-swatches{display:flex; flex-wrap:wrap; gap:9px}
-.sw{width:30px; height:30px; border-radius:50%; cursor:pointer; border:3px solid transparent; box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.sw{width:28px; height:28px; border-radius:50%; cursor:pointer; border:3px solid transparent; box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .sw.on{border-color:var(--ink)}
+.cpick{display:flex; flex-direction:column; gap:10px}
+.cp-area{position:relative; height:130px; border-radius:12px; cursor:crosshair; touch-action:none; overflow:hidden; border:1px solid var(--line)}
+.cp-athumb{position:absolute; width:16px; height:16px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.35); transform:translate(-50%,-50%); pointer-events:none}
+.cp-hue{position:relative; height:16px; border-radius:999px; cursor:pointer; touch-action:none; background:linear-gradient(to right,#f00 0%,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,#f00 100%)}
+.cp-hthumb{position:absolute; top:50%; width:18px; height:18px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.35); transform:translate(-50%,-50%); pointer-events:none}
+.cp-foot{display:flex; align-items:center; gap:10px}
+.cp-prev{width:34px; height:34px; border-radius:9px; border:1px solid var(--line); flex:none}
+.cp-hex{width:110px; border:1.5px solid var(--line); border-radius:9px; padding:8px 10px; font-family:inherit; font-size:13px; text-transform:uppercase}
 .pf-fams{display:flex; flex-direction:column; gap:8px}
 .pf-fam{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1.5px solid var(--line); border-radius:11px; padding:10px 12px}
 .pf-fam.current{border-color:var(--orange); background:#fff6f1}
@@ -97,7 +105,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .dc-plus{border:none; background:var(--dc); color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:17px; font-weight:700; display:grid; place-items:center; flex:none; line-height:1}
 .dc-ev-list{display:flex; flex-direction:column; gap:4px; max-height:150px; overflow-y:auto; overflow-x:hidden}
 .dc-none{display:flex; align-items:center; gap:7px; color:#b6b6bf; font-size:12.5px; padding:6px 2px}
-.evrow{display:flex; align-items:stretch; background:#fff; border-radius:7px; box-shadow:0 1px 3px rgba(0,0,0,.05); margin-bottom:4px; min-width:0; overflow:hidden}
+.evrow{display:flex; align-items:stretch; background:#fff; border:1px solid #e9e9ee; border-radius:7px; box-shadow:0 1px 2px rgba(0,0,0,.04); margin-bottom:4px; min-width:0; overflow:hidden}
 .ev-stripe{display:flex; flex:none}
 .ev-stripe i{width:4px; display:block}
 .ev-body{flex:1; min-width:0; padding:4px 7px}
@@ -266,7 +274,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 .shop-item .nm{font-size:14px; flex:1}
 .shop-item .q{font-size:12.5px; color:var(--muted); font-weight:700}
 .shop-item.have .nm{text-decoration:line-through; color:#bcbcc4}
-.pantry .shop-item{opacity:.55} .pantry .nm{text-decoration:line-through}
+.pantry .shop-item{opacity:1}
 .wa{display:flex; align-items:center; justify-content:center; gap:9px; text-decoration:none; background:#25d366; color:#0a3d1e; font-weight:800; font-size:14px; padding:14px; border-radius:13px; margin-top:12px}
 
 /* formulario de receta */
@@ -425,7 +433,14 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
     <div class="sheet-head"><h2>Tu perfil</h2><button class="x-dark" data-close="profileModal">×</button></div>
     <div class="sheet-body">
       <div class="field"><label>Nombre</label><input id="pfName" type="text" autocomplete="off"></div>
-      <div class="field"><label>Tu color</label><div class="color-swatches" id="pfColors"></div></div>
+      <div class="field"><label>Tu color</label>
+        <div class="cpick">
+          <div class="cp-area" id="cpArea"><div class="cp-athumb" id="cpAThumb"></div></div>
+          <div class="cp-hue" id="cpHue"><div class="cp-hthumb" id="cpHThumb"></div></div>
+          <div class="cp-foot"><span class="cp-prev" id="cpPrev"></span><input class="cp-hex" id="cpHex" type="text" maxlength="7" spellcheck="false"></div>
+          <div class="color-swatches" id="pfColors"></div>
+        </div>
+      </div>
       <div class="field"><label>Email</label><input id="pfEmail" type="text" disabled></div>
       <div class="field"><label>Tus familias <span class="lbl-hint">— toca “Usar” para cambiar</span></label><div id="pfFamilies" class="pf-fams"></div></div>
       <details class="pf-pass"><summary>Cambiar contraseña</summary>
@@ -489,7 +504,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 
 <script type="module">
 // --- Auto-actualización: si hay una versión más nueva publicada, recarga sin caché ---
-const APP_VERSION='v17';
+const APP_VERSION='v19';
 try{
   const _r=await fetch('version.txt?ts='+Date.now(),{cache:'no-store'});
   if(_r.ok){
@@ -740,7 +755,7 @@ function evRowHtml(e){ const cs=eventColors(e); return `<div class="evrow">${evS
 async function loadMembers(){ try{ MEMBERS=await familiesApi.members(family.id); }catch(e){ MEMBERS=[]; } }
 
 // ---- Perfil del usuario (avatar + color) ----
-let MYPROFILE=null, pfColorSel=null;
+let MYPROFILE=null, pfColorSel=null, pfHsv={h:0,s:0,v:0.5};
 function myColor(){ return (MYPROFILE&&MYPROFILE.color) || (MYPROFILE?memberColor(MYPROFILE.id):'#8a8a94'); }
 function applyAvatar(){ if(!MYPROFILE)return; const b=$('#profileBtn'); if(b) b.style.background=myColor(); const l=$('#avatarLabel'); if(l) l.textContent=((MYPROFILE.display_name||'?').trim().charAt(0)||'?').toUpperCase(); }
 async function loadMyProfile(){ try{ MYPROFILE=await profilesApi.me(); }catch(e){ MYPROFILE=null; } applyAvatar(); }
@@ -909,7 +924,8 @@ let shopState=null;
 async function openShop(){
   try{
     const res=await shoppingApi.generate(family.id);
-    shopState={ days:res.days, buy:res.buy.map(x=>({...x})), pantry:res.pantry.slice(), view:'all', byMeal:null, checked:new Set() };
+    const all=[...res.buy.map(x=>({...x})), ...res.pantry.map(x=>({...x, basic:true}))];
+    shopState={ days:res.days, buy:all, view:'all', byMeal:null, checked:new Set(res.pantry.map(itemKey)) };
     renderShop();
     $('#shopView').querySelectorAll('.sv').forEach(b=>b.classList.toggle('on',b.dataset.v==='all'));
     $('#shopAllView').hidden=false; $('#shopMealView').hidden=true;
@@ -946,9 +962,10 @@ function renderMealView(){
     const rows=manual.map(x=>itemRow(x,`<button class="rm-item" data-id="${x.id}" title="Quitar">×</button>`)).join('');
     html+=`<div class="meal-group"><div class="mg-head">🛒 Añadidos a mano</div><div class="mg-items">${rows}</div></div>`;
   }
-  if(s.pantry.length){
-    const prows=s.pantry.map((x,i)=>`<label class="shop-item"><input type="checkbox" data-pi="${i}" checked><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join('');
-    html+=`<div class="meal-group"><div class="mg-head">🧂 Productos básicos <span class="mg-dishes" style="margin:0">— ya en tu despensa</span></div><div class="mg-items">${prows}</div></div>`;
+  const basics=s.buy.filter(x=>x.basic);
+  if(basics.length){
+    const rows=basics.map(x=>itemRow(x)).join('');
+    html+=`<div class="meal-group"><div class="mg-head">🧂 Productos básicos <span class="mg-dishes" style="margin:0">— marcados = ya los tienes</span></div><div class="mg-items">${rows}</div></div>`;
   }
   $('#shopMealView').innerHTML=html;
   const boxes=$('#shopMealView').querySelectorAll('input[data-k]');
@@ -958,12 +975,9 @@ function renderMealView(){
     boxes.forEach(o=>{ if(decodeURIComponent(o.dataset.k)===k){ o.checked=cb.checked; o.closest('.shop-item').classList.toggle('have',cb.checked);} });
     updateWa();
   }));
-  $('#shopMealView').querySelectorAll('input[data-pi]').forEach(cb=>cb.addEventListener('change',()=>{
-    if(!cb.checked){ const i=+cb.dataset.pi; const item=s.pantry.splice(i,1)[0]; if(item){ s.buy.push(item); renderShop(); renderMealView(); } }
-  }));
   $('#shopMealView').querySelectorAll('.rm-item').forEach(b=>b.addEventListener('click',async e=>{
     e.preventDefault(); e.stopPropagation();
-    try{ await shoppingApi.removeManual(b.dataset.id); s.buy=s.buy.filter(x=>x.id!==b.dataset.id); renderMealView(); }
+    try{ await shoppingApi.removeManual(b.dataset.id); s.buy=s.buy.filter(x=>x.id!==b.dataset.id); renderShop(); renderMealView(); }
     catch(err){ toast(err.message); }
   }));
 }
@@ -971,19 +985,29 @@ function itemKey(x){ return (x.name||'').trim().toLowerCase()+'|'+(x.unit||''); 
 function updateWa(){ $('#waBtn').href=shoppingApi.whatsappUrl({ buy: shopState.buy.filter(x=>!shopState.checked.has(itemKey(x))) }); }
 function renderShop(){
   const s=shopState;
-  $('#shopSub').textContent=`${s.days.length} días · ${s.buy.length} productos`;
+  const buyItems=s.buy.filter(x=>!x.basic);
+  const basicItems=s.buy.filter(x=>x.basic);
+  const toBuy=s.buy.filter(x=>!s.checked.has(itemKey(x))).length;
+  $('#shopSub').textContent=`${s.days.length} días · ${toBuy} por comprar`;
   $('#shopDays').innerHTML=s.days.length?s.days.map(dISO=>{const d=new Date(dISO+'T00:00:00');return `<span class="chip">${DOW[(d.getDay()+6)%7]} · ${d.getDate()} ${MES[d.getMonth()]}</span>`;}).join(''):'<span style="color:#b6b6bf;font-size:13px">Ningún día marcado con 🛒</span>';
-  $('#shopBuy').innerHTML=s.buy.length?s.buy.map((x,i)=>{const ch=s.checked.has(itemKey(x));return `<label class="shop-item${ch?' have':''}"><input type="checkbox" data-i="${i}" ${ch?'checked':''}><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span>${x.manual?`<button class="rm-item" data-id="${x.id}" title="Quitar">×</button>`:''}</label>`;}).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada que comprar. Marca días con 🛒, añade recetas con ingredientes, o mete productos con ＋.</p>';
-  $('#shopPantry').innerHTML=s.pantry.length?s.pantry.map((x,i)=>`<label class="shop-item"><input type="checkbox" data-i="${i}" checked><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span></label>`).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada en la despensa.</p>';
+  const rowHtml=(x)=>{const k=itemKey(x);const ch=s.checked.has(k);return `<label class="shop-item${ch?' have':''}"><input type="checkbox" data-k="${encodeURIComponent(k)}" ${ch?'checked':''}><span class="nm">${esc(x.name)}</span><span class="q">${x.quantity?fmt(x.quantity):''} ${x.unit||''}</span>${x.manual?`<button class="rm-item" data-id="${x.id}" title="Quitar">×</button>`:''}</label>`;};
+  $('#shopBuy').innerHTML=buyItems.length?buyItems.map(rowHtml).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada que comprar. Marca días con 🛒, añade recetas con ingredientes, o mete productos con ＋.</p>';
+  $('#shopPantry').innerHTML=basicItems.length?basicItems.map(rowHtml).join(''):'<p style="color:#b6b6bf;font-size:13px">Nada en la despensa.</p>';
   updateWa();
-  $('#shopBuy').querySelectorAll('input[type=checkbox]').forEach(cb=>cb.addEventListener('change',()=>{ const x=s.buy[+cb.dataset.i]; const k=itemKey(x); if(cb.checked) s.checked.add(k); else s.checked.delete(k); cb.closest('.shop-item').classList.toggle('have',cb.checked); updateWa(); }));
-  $('#shopBuy').querySelectorAll('.rm-item').forEach(b=>b.addEventListener('click',async e=>{
+  wireShopChecks($('#shopBuy')); wireShopChecks($('#shopPantry'));
+  $('#shopAllView').querySelectorAll('.rm-item').forEach(b=>b.addEventListener('click',async e=>{
     e.preventDefault(); e.stopPropagation();
-    try{ await shoppingApi.removeManual(b.dataset.id); s.buy=s.buy.filter(x=>x.id!==b.dataset.id); renderShop(); }
+    try{ await shoppingApi.removeManual(b.dataset.id); s.buy=s.buy.filter(x=>x.id!==b.dataset.id); renderShop(); if(shopState.view==='meal') renderMealView(); }
     catch(err){ toast(err.message); }
   }));
-  $('#shopPantry').querySelectorAll('input').forEach(cb=>cb.addEventListener('change',()=>{
-    if(!cb.checked){ const i=+cb.dataset.i; const item=s.pantry.splice(i,1)[0]; if(item){ s.buy.push(item); renderShop(); } }
+}
+function wireShopChecks(container){
+  const s=shopState;
+  container.querySelectorAll('input[data-k]').forEach(cb=>cb.addEventListener('change',()=>{
+    const k=decodeURIComponent(cb.dataset.k);
+    if(cb.checked) s.checked.add(k); else s.checked.delete(k);
+    cb.closest('.shop-item').classList.toggle('have',cb.checked);
+    updateWa();
   }));
 }
 async function addManualItem(){
@@ -1047,13 +1071,45 @@ $('#rfDone').addEventListener('click',closeRecipeForm);
 $('#rEdit').addEventListener('click',()=>{$('#recipeModal').hidden=true; openRecipeForm(openRid);});
 
 // ---- Perfil: abrir, guardar, cambiar familia, contraseña ----
+// ---- Selector de color (HSV) ----
+function hsvToRgb(h,s,v){ h=(h%360+360)%360; const c=v*s, x=c*(1-Math.abs((h/60)%2-1)), m=v-c; let r=0,g=0,b=0;
+  if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;}
+  return {r:Math.round((r+m)*255),g:Math.round((g+m)*255),b:Math.round((b+m)*255)}; }
+function hsvToHex(hsv){ const {r,g,b}=hsvToRgb(hsv.h,hsv.s,hsv.v); return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join(''); }
+function hexToHsv(hex){ hex=(hex||'').replace('#','').trim(); if(hex.length===3) hex=hex.split('').map(c=>c+c).join('');
+  if(!/^[0-9a-fA-F]{6}$/.test(hex)) return {h:0,s:0,v:0.5};
+  const r=parseInt(hex.slice(0,2),16)/255,g=parseInt(hex.slice(2,4),16)/255,b=parseInt(hex.slice(4,6),16)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn; let h=0;
+  if(d){ if(mx===r)h=60*(((g-b)/d)%6); else if(mx===g)h=60*((b-r)/d+2); else h=60*((r-g)/d+4); } if(h<0)h+=360;
+  return {h, s:mx?d/mx:0, v:mx}; }
+function updatePicker(){
+  const {h,s,v}=pfHsv, hex=hsvToHex(pfHsv);
+  const area=$('#cpArea'); if(!area) return;
+  area.style.background=`linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,rgba(255,255,255,0)),hsl(${h},100%,50%)`;
+  const at=$('#cpAThumb'); at.style.left=(s*100)+'%'; at.style.top=((1-v)*100)+'%'; at.style.background=hex;
+  const ht=$('#cpHThumb'); ht.style.left=(h/360*100)+'%'; ht.style.background=`hsl(${h},100%,50%)`;
+  $('#cpPrev').style.background=hex;
+  const hexIn=$('#cpHex'); if(document.activeElement!==hexIn) hexIn.value=hex.toUpperCase();
+  pfColorSel=hex;
+}
+function setupColorPicker(){
+  const area=$('#cpArea'), hue=$('#cpHue'), hexIn=$('#cpHex');
+  const clamp=x=>Math.max(0,Math.min(1,x));
+  const fromArea=e=>{ const r=area.getBoundingClientRect(); pfHsv.s=clamp((e.clientX-r.left)/r.width); pfHsv.v=1-clamp((e.clientY-r.top)/r.height); updatePicker(); };
+  const fromHue=e=>{ const r=hue.getBoundingClientRect(); pfHsv.h=clamp((e.clientX-r.left)/r.width)*360; updatePicker(); };
+  const drag=(el,fn)=>el.addEventListener('pointerdown',e=>{ el.setPointerCapture(e.pointerId); fn(e); const mv=ev=>fn(ev); const up=()=>{el.removeEventListener('pointermove',mv);el.removeEventListener('pointerup',up);}; el.addEventListener('pointermove',mv); el.addEventListener('pointerup',up); });
+  drag(area,fromArea); drag(hue,fromHue);
+  const applyHex=()=>{ pfHsv=hexToHsv(hexIn.value); updatePicker(); };
+  hexIn.addEventListener('change',applyHex);
+  hexIn.addEventListener('keydown',e=>{ if(e.key==='Enter') applyHex(); });
+}
 async function openProfile(){
   if(!MYPROFILE) await loadMyProfile();
   $('#pfName').value=MYPROFILE?.display_name||'';
   $('#pfEmail').value=MYPROFILE?.email||'';
-  pfColorSel=myColor();
-  $('#pfColors').innerHTML=EV_PALETTE.map(c=>`<span class="sw${c===pfColorSel?' on':''}" data-c="${c}" style="background:${c}"></span>`).join('');
-  $('#pfColors').querySelectorAll('.sw').forEach(s=>s.addEventListener('click',()=>{ pfColorSel=s.dataset.c; $('#pfColors').querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===s)); }));
+  pfHsv=hexToHsv(myColor()); updatePicker();
+  $('#pfColors').innerHTML=EV_PALETTE.map(c=>`<span class="sw" data-c="${c}" style="background:${c}"></span>`).join('');
+  $('#pfColors').querySelectorAll('.sw').forEach(s=>s.addEventListener('click',()=>{ pfHsv=hexToHsv(s.dataset.c); updatePicker(); }));
   try{
     const fams=await familiesApi.mine();
     $('#pfFamilies').innerHTML=fams.map(f=>`<div class="pf-fam${f.id===family.id?' current':''}"><div><div class="n">${esc(f.name)}</div><div class="role">${f.role==='admin'?'Administrador':'Miembro'}</div></div>${f.id===family.id?'<span class="pf-current-tag">Actual</span>':`<button class="pf-use" data-id="${f.id}" data-name="${esc(f.name)}" data-code="${esc(f.invite_code)}" data-role="${f.role}">Usar</button>`}</div>`).join('');
@@ -1082,6 +1138,7 @@ async function changePassword(){
   catch(e){ toast('No se pudo cambiar: '+e.message); }
 }
 $('#profileBtn').addEventListener('click',openProfile);
+setupColorPicker();
 $('#pfSave').addEventListener('click',saveProfile);
 $('#pfCancel').addEventListener('click',()=>$('#profileModal').hidden=true);
 $('#pfPassBtn').addEventListener('click',changePassword);

@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Semanario V2 · Entrar</title>
 <style>
-:root{ --orange:#ff6b35; --orange-dark:#e85a28; --bg:#f2f2f4; --ink:#2b2b30; --muted:#8a8a94; --line:#ececf0;
+:root{ --orange:#16a596; --orange-dark:#0e857a; --bg:#f2f2f4; --ink:#2b2b30; --muted:#8a8a94; --line:#ececf0;
   --font: ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",sans-serif; }
-*{box-sizing:border-box} body{margin:0; font-family:var(--font); background:radial-gradient(1000px 400px at 50% -120px,#ffe9dd,transparent 70%),var(--bg);
+*{box-sizing:border-box} body{margin:0; font-family:var(--font); background:radial-gradient(1000px 400px at 50% -120px,#d3f0ea,transparent 70%),var(--bg);
   color:var(--ink); min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:40px 16px}
 .card{width:100%; max-width:420px; background:#fff; border-radius:20px; box-shadow:0 8px 30px rgba(30,20,10,.12); overflow:hidden}
 .head{background:linear-gradient(135deg,var(--orange),var(--orange-dark)); color:#fff; padding:20px 22px}
@@ -18,7 +18,7 @@ h2{font-size:14px; margin:0 0 12px; font-weight:800}
 .field{margin-bottom:12px}
 .field label{display:block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); margin-bottom:6px}
 .field input{width:100%; border:1.5px solid var(--line); border-radius:11px; padding:11px 12px; font-family:inherit; font-size:14px; background:#fafafb; outline:none}
-.field input:focus{border-color:var(--orange); box-shadow:0 0 0 3px #ffdcca; background:#fff}
+.field input:focus{border-color:var(--orange); box-shadow:0 0 0 3px #c3ede7; background:#fff}
 .btn{border:none; border-radius:12px; padding:12px 14px; font-family:inherit; font-weight:800; font-size:14px; cursor:pointer; width:100%}
 .btn.primary{background:var(--orange); color:#fff} .btn.primary:hover{background:var(--orange-dark)}
 .btn.ghost{background:#f1f1f4; color:#55555e; margin-top:8px} .btn.ghost:hover{background:#e9e9ee}
@@ -31,12 +31,12 @@ h2{font-size:14px; margin:0 0 12px; font-weight:800}
 .fam{border:1.5px solid var(--line); border-radius:12px; padding:12px; margin-bottom:8px; display:flex; flex-direction:column; gap:10px}
 .fam-top{display:flex; justify-content:space-between; align-items:center}
 .fam .n{font-weight:800; font-size:14px} .fam .role{font-size:11px; color:var(--muted)}
-.code{font-family:ui-monospace,monospace; font-weight:800; background:#fff2ea; color:var(--orange-dark); padding:4px 8px; border-radius:8px; font-size:13px; letter-spacing:1px}
+.code{font-family:ui-monospace,monospace; font-weight:800; background:#e2f5f1; color:var(--orange-dark); padding:4px 8px; border-radius:8px; font-size:13px; letter-spacing:1px}
 .userbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:12.5px; color:var(--muted)}
 .link{background:none; border:none; color:var(--orange-dark); font-weight:800; cursor:pointer; font-family:inherit; font-size:12.5px}
 .tabs{display:flex; gap:6px; margin-bottom:14px}
 .tabs button{flex:1; border:1.5px solid var(--line); background:#fafafb; border-radius:10px; padding:9px; font-family:inherit; font-weight:800; font-size:12.5px; color:#77777f; cursor:pointer}
-.tabs button.on{border-color:var(--orange); background:#fff2ea; color:var(--orange-dark)}
+.tabs button.on{border-color:var(--orange); background:#e2f5f1; color:var(--orange-dark)}
 .hidden{display:none}
 </style>
 </head>
@@ -87,7 +87,7 @@ h2{font-size:14px; margin:0 0 12px; font-weight:800}
 </div>
 
 <script type="module">
-import { auth, families } from './supabase-client.js';
+import { auth, families } from './supabase-client.js?v=19';
 
 const $ = s => document.querySelector(s);
 let mode = 'in'; // 'in' | 'up'
