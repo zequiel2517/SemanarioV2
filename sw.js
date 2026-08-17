@@ -2,7 +2,7 @@
 // Estrategia: "primero red" (network-first). Online siempre baja lo último;
 // la caché solo se usa como respaldo cuando no hay conexión.
 // Sube SW_VERSION para forzar actualización del propio SW.
-const SW_VERSION = 'v21';
+const SW_VERSION = 'v22';
 const CACHE = 'semanario-' + SW_VERSION;
 
 // Recursos propios que conviene tener en caché para el modo offline básico.
@@ -14,6 +14,8 @@ const ASSETS = [
   './manifest.webmanifest',
   './icono_192x192.png',
   './icono_512x512.png',
+  './icono_maskable_192.png',
+  './icono_maskable_512.png',
 ];
 
 self.addEventListener('install', (e) => {

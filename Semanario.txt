@@ -1,0 +1,66 @@
+BD Supabase
+Usuario zequiel2517 (por usuario de github)
+Nombre del Proyecto: Semanario
+Contraseña del proyecto: dos como siempre mi hermano final modificado final
+
+Project URL: https://tqdxgkoyyxprbyjfgmkt.supabase.co
+Publishable key (antes llamada "Anon public key"): sb_publishable_nA007BBfZPHWwrjwdYvdyQ_euaVkH8F
+
+Proyecto:
+	https://github.com/zequiel2517/SemanarioV2.git
+Para internet:
+	https://zequiel2517.github.io/SemanarioV2/
+	
+Ya gurada todo en BD y lo muestra correctamente.
+Otros errores que debemos subsanar.
+ 1 - En la lista de compra, no se nos permite desmarcar los productos "Ya en tu despensa". como por ejemplo el aceite de oliva, la sal, etc.
+ 2 - Al abrir un plato, si el nombre es largo, hace que se parta en dos lineas la temporada.
+ 3 - Cuando hay dos platos en una comida, no se puede elegir el plato a ver y por tanto tampoco a editarlo.
+ 4 - Quitar el comentario del "Mockup V2 - vista semana...", pues ya no es necesario.
+ 
+ 
+Mejoras que debemos hacer.
+	1 - Añdir a la lista de tipos de unidades.. Brick, bolsa, paquete
+	2 - Añdir lista de guarniciones. Por ejemplo, las carrilleras se pueden hacer con: Patatas fritas,  Pure de patatas,  Arroz,  Ensalada mixta,  Etc
+		Lo idoneo en la eleccion de la lista de platos seria que pudieramos elegir un plato y diese la opicon de añdir una guarnicion (que seria otro plato con una marca de guarnicion en BD) y al escribirse en el menu del dia deberia aparecer: "plato" con "guarnicion"
+	3 - Añadir una opción en el carrito de la compra un boton de abrir ("+"), para poder meter otros productos manuelmente que no esten en la lista.. por ejemplo de limpieza, servilletas, pan, etc.
+
+Mas mejoras (para mañana):
+	1 - Cuando un dia tiene un plato con guarnicion, solo aparece en la lista de compra los ingredientes de la guarnicion y los que metemos manualmente con el "+"
+	2 - Cuando enviamos los productos por WhatsApp, no elimina los que hemos tachado en la lista de la compra, por lo que hacemos la compra de toooodos los productos
+	3 - La lista de la compra no deberia cambiar cuando cambiamos la semana. Deberia ser la misma para todas las semanas, pues por ejemplo, si queremos hacer la compra el viernes del sabado, domingo y lunes y martes de la siguiente semana, deberia ser la misma.
+	4 - Deberia haber un boton de reseteo del carrito de la compra, que desmarcaria todos los dias, dejando solo en el carrito los productos añadidos manualmente.
+	
+	
+seguimos exactamente igual que hace uno momento, nada más que ahora sí veo el botón flotante "-" encima del plato principal. El resto de peticiones siguen igual.
+En los platos que NO tienen guarnición:
+    En el PC, veo el plato principal y al lado el botón de añadir guarnicion
+    En el Móvil, veo el plato principal y debajo el botón de añadir guarnicion
+
+En los platos que SI tienen guarnición:
+    En el PC y Móvil, veo el plato principal que ocupa toda la línea y debajo el plato de guarnición
+
+Lo que quiero es que tanto si hay plato de guarnición como si no la hay (y por tanto está el botón de "+ guarnición"), están en la misma línea que el plato principal. Y esto debe ocurrir independientemente de si se ejecuta en PC o Móvil
+
+
+Cosas a mejorar:
+	1 - Cuando me logo en la app, me ofrece deiferentes tipos de acceso: Admin y uno normal por cada usuario que esté dado de alta en el grupo (entiendo que porian ser tantos como usuarios dados de alta en el grupo).
+	2 - Cuando un evento afecta a más de un usuario, querría que se vieran los colores de cada uno de los usuarios. Actualmente solo se ve el de uno de ellos.
+	3 - Estaría bien que cada usuario pudiera elegir su color... ¿cómo lo harías?
+	4 - Quizás en la ficha de la cabecera, en vez de poner el "SF", podríamos poner un icono de un usuario con el círculo de su color, y pulsando sobre él, se podría acceder a su perfil (con nombre, color, familias a las que pertenece (por si pudiera cambiar de una a otra) y su correo electrónico, cambiar contraseña quizás una lista próximos de eventos (2 o 3 semanas vista).
+
+
+Cosas a mejorar:
+	1 - En la parte de elección de productos lista "Todo", los productos de "YA EN TU DESPENSA" aparecen marcados y por lo tanto tachados (eso está bien)
+	Sin embargo, en la parte de elección de "Por Comidas", veo los productos marcados, pero no tachados... y cuando los desmarco, desaparecen de la pantalla, entiendo que es porque no tiene un lugar exacto en la lista para entrar. Quizás los deberíamos dejar en "Añadidos a mano" o crear otra sección, pero entiendo que eso puede ser más engorroso.
+	2 - En el forntal inicial.. puedes poner para cuando hay un evento, que éste tenga un reborde pequeño y discreto? actualmente no tiene ningún reborde y parece que está ahí flotando en la nada
+
+
+Cosas a mejorar:
+	1 - En la pantalla de la elección de "Tu color", se podría poner un selecctor de color, para aumentar exponecialmente los colores disponibles? quizás algo parecido a lo que podemos ver en:
+		https://htmlcolorcodes.com/es/selector-de-color/
+		dos barras, la priemra con todos los colores y la segunda con los colores gradientes de donde esté el selector
+
+
+Cosas a mejorar:
+	1 - Se puede transformar en una PWA (Progressive Web App o Aplicación Web Progresiva). Si no entiendo mal se comportaría como una aplicación nativa. Se instalaría directamente desde el navegador en el teléfono o PC sin pasar por tiendas oficiales. No sé qué más funciones se añadirían... pero básicamente lo que quiero es que se pueda hacer un acceso directo en el móvil de forma que parezca una app. Había pensado en que tuviera el icono...

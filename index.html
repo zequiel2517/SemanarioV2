@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="theme-color" content="#16a596">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icono_192x192.png">
+<link rel="apple-touch-icon" href="icono_maskable_192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Semanario">
@@ -511,7 +511,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 
 <script type="module">
 // --- Auto-actualización: si hay una versión más nueva publicada, recarga sin caché ---
-const APP_VERSION='v21';
+const APP_VERSION='v22';
 try{
   const _r=await fetch('version.txt?ts='+Date.now(),{cache:'no-store'});
   if(_r.ok){
