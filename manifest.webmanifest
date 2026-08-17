@@ -1,0 +1,15 @@
+{
+  "name": "Semanario Familiar",
+  "short_name": "Semanario",
+  "description": "Planificador semanal de comidas y eventos para la familia",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f2f4",
+  "theme_color": "#16a596",
+  "icons": [
+    { "src": "./icono_192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icono_512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
