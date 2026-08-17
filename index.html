@@ -511,7 +511,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 
 <script type="module">
 // --- Auto-actualización: si hay una versión más nueva publicada, recarga sin caché ---
-const APP_VERSION='v22';
+const APP_VERSION='v23';
 try{
   const _r=await fetch('version.txt?ts='+Date.now(),{cache:'no-store'});
   if(_r.ok){
@@ -869,15 +869,16 @@ async function openRecipe(recipeId){
 // ================= Formulario de receta (crear / editar) =================
 async function createRecipeFrom(key,i,name){
   if(!name) return;
+  const existing=RECIPES.find(r=>norm(r.nombre)===norm(name));
   try{
-    const rec=await recipesApi.upsert({family_id:family.id,title:name,season:'todo el año'});
-    await loadRecipes();
+    const rec = existing || await recipesApi.upsert({family_id:family.id,title:name,season:'todo el año'});
+    if(!existing) await loadRecipes();
     const dish=current[key][i];
     if(dish.id) await weekApi.updateDish(dish.id,{recipe_id:rec.id,free_text:null});
     else { const row=await weekApi.addDish(family.id,current.date,slotOf(key),{recipe_id:rec.id,position:i}); dish.id=row.id; }
-    dish.rid=rec.id; dish.texto=rec.title; renderDishes();
-    openRecipeForm(rec.id);
-    toast('Receta creada. Añade ingredientes cuando quieras 🙂');
+    dish.rid=rec.id; dish.texto=rec.nombre||rec.title; renderDishes();
+    if(existing) toast('Ya existía "'+(rec.nombre||rec.title)+'": la he reutilizado.');
+    else { openRecipeForm(rec.id); toast('Receta creada. Añade ingredientes cuando quieras 🙂'); }
   }catch(e){ toast('No se pudo crear la receta: '+e.message); }
 }
 function setSeg(sel,val){ document.querySelectorAll(sel+' button').forEach(b=>b.classList.toggle('on', b.dataset.v===val)); }

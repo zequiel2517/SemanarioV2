@@ -131,6 +131,13 @@ export const recipes = {
       const { data, error } = await supabase.from('recipes').update(patch).eq('id', id).select().single();
       if (error) throw error; return data;
     }
+    // Anti-duplicados: si ya hay una receta con ese nombre en la familia, reutilízala en vez de crear otra
+    const title = (recipe.title || '').trim();
+    if (title && recipe.family_id) {
+      const { data: dup } = await supabase.from('recipes')
+        .select('*').eq('family_id', recipe.family_id).ilike('title', title).limit(1);
+      if (dup && dup.length) return dup[0];
+    }
     const { data, error } = await supabase.from('recipes').insert(recipe).select().single();
     if (error) throw error; return data;
   },
