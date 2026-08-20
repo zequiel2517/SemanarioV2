@@ -511,7 +511,7 @@ body{font-family:var(--font); background:radial-gradient(1200px 400px at 50% -14
 
 <script type="module">
 // --- Auto-actualización: si hay una versión más nueva publicada, recarga sin caché ---
-const APP_VERSION='v23';
+const APP_VERSION='v24';
 try{
   const _r=await fetch('version.txt?ts='+Date.now(),{cache:'no-store'});
   if(_r.ok){
@@ -680,7 +680,7 @@ function renderDishList(key,container){
           <span class="badge-n">${i+1}º</span>
           <input type="text" value="${esc(dish.texto)}" placeholder="¿Qué plato? Escribe para buscar…" autocomplete="off" spellcheck="false">
           <button class="btn-ic btn-book" title="Ver receta" ${rec?'':'hidden'}>📖</button>
-          ${current[key].length>1?`<button class="dish-rm" title="Quitar plato">−</button>`:''}
+          ${(current[key].length>1 || dish.texto)?`<button class="dish-rm" title="Quitar plato">−</button>`:''}
         </div>
         ${sideHtml}
       </div>
@@ -745,7 +745,12 @@ async function commitFree(key,i,text){
 }
 async function removeDish(key,i){
   const dish=current[key][i];
-  try{ if(dish.id) await weekApi.removeDish(dish.id); current[key].splice(i,1); renderDishes(); flashSaved(); }
+  try{
+    if(dish.id) await weekApi.removeDish(dish.id);
+    if(current[key].length>1) current[key].splice(i,1);
+    else current[key][i]={id:null,rid:null,texto:'',side_rid:null,side_text:null};
+    renderDishes(); flashSaved();
+  }
   catch(e){ toast(e.message); }
 }
 
